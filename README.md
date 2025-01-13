@@ -6,12 +6,14 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
 
 ## Features
 
-*  Subscribes to websocket with cursor
-*  Retries the socket on failure
+*  Sets up lists on your labelers account based on your label's display name and description.
+*  Subscribes to your labeler's websocket
+    *  Allows starting from `cursor=0` to get all existing labels
+*  Retries the socket on failures
 *  Validates payloads as label messages
 *  Adds or removes users from lists in order of labeling.
     * Does not resolve net changes before applying, so adding a label then removing the label will result in two actions when it could be none.
-*  Saves cursor state to filesystem every 1 second to reconnect at the last known value
+*  Saves cursor state to filesystem every 1 second to reconnect at the last known value across deploys or disconnects.
 *  Has a basic HttpApi:
     * GET /health
     * GET /cursor
