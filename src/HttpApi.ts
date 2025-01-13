@@ -13,7 +13,7 @@ import { Effect, Layer, Schema } from "effect"
 const ServerApi = HttpApi.make("ServerApi").add(
   HttpApiGroup.make("Health")
     .add(
-      HttpApiEndpoint.get("health-check")`/health-check`.addSuccess(
+      HttpApiEndpoint.get("health-check")`/health`.addSuccess(
         Schema.String,
       ),
     )

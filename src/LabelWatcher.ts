@@ -1,33 +1,10 @@
+import { AtpAgent } from "@/AtpAgent"
 import { Env } from "@/Environment"
 import { decodeFirst } from "@atcute/cbor"
 import { Context, Data, Effect, Layer, Schema, Stream } from "effect"
+import { Cursor } from "./Cursor"
 import { RetryingSocket } from "./RetryingSocket"
 import { MessageLabels, parseSubscribeLabelsMessage } from "./schema"
-
-import { ListManager } from "@/ListManager"
-import { Cursor } from "./Cursor"
-
-/**
- * v1:
- *  - Subscribes to websocket with cursor
- *  - Retries the socket on failure
- *  - Validates payloads as label messages
- *  - Adds or removes users from lists in order of labeling
- *    - Does not resolve net changes before applying, so adding a label then removing the label will
- *      result in two actions when it could be none.
- *  - Saves cursor state to filesystem every 1 second to reconnect at the last known value
- *
- * @NEXT v1.1
- *  - Telemetry
- *  - Error logging
- *
- * v1.2
- *  - Open source it?
- *  - Allow customizing list names
- *  - Listen for profile labels as well as account labels
- *  - Multi-tenency. Allow subscribing to multiple labelers. How would you do this?
- *    - One LabelWatcher per labeler? How do you configure it properly?
- */
 
 const handleMessageError = (e: unknown) =>
   Effect.gen(function*() {
@@ -37,7 +14,7 @@ const handleMessageError = (e: unknown) =>
 
 const makeRun = Effect.gen(function*() {
   const connect = yield* RetryingSocket
-  const manager = yield* ListManager
+  const agent = yield* AtpAgent
   const cursor = yield* Cursor
   const initialCursor = yield* cursor.get
   const { labelerSocketUrl } = yield* Env
@@ -49,7 +26,7 @@ const makeRun = Effect.gen(function*() {
     Stream.mapEffect(parseMessage),
     Stream.catchAll(handleMessageError),
     Stream.filter(Schema.is(MessageLabels, { exact: false })),
-    Stream.mapEffect(handleLabel(manager)),
+    Stream.mapEffect(handleLabel(agent)),
     Stream.runForEach(cursor.set),
   )
 
@@ -75,8 +52,8 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
   static Default = Layer.effect(LabelWatcher, makeRun).pipe(
     Layer.provide(RetryingSocket.Default),
     Layer.provide(Cursor.Default),
-    Layer.provide(ListManager.Logging),
     Layer.provide(Env.Default),
+    Layer.provide(AtpAgent.Default),
   )
 }
 
@@ -87,15 +64,15 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
  *
  * Returns the sequence to be saved as a cursor
  */
-const handleLabel = (manager: ListManager) => (label: MessageLabels) =>
+const handleLabel = (agent: AtpAgent) => (label: MessageLabels) =>
   Effect.gen(function*() {
     const labels = label.body.labels
     for (const label of labels) {
       if (label.neg) {
-        yield* manager.removeUserFromList(label.uri, label.val)
+        yield* agent.removeUserFromList(label.uri, label.val)
         continue
       }
-      yield* manager.addUserToList(label.uri, label.val)
+      yield* agent.addUserToList(label.uri, label.val)
     }
     return label.body.seq
   })
