@@ -19,7 +19,7 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
 The expected environment variables are:
 
 ```sh
-# No need to provide this unless you'd like the override the default
+# (default shown)
 BSKY_SERVICE="https://bsky.social"
 
 ############################   Labeler Info   #########################
@@ -34,6 +34,8 @@ LABELER_APP_PASSWORD=
 # (defaults shown)
 LABELER_CURSOR_FILEPATH=cursor.txt
 LOG_FILEPATH=log.txt
+# DEBUG, INFO, WARNING, FATAL, NONE, ALL
+LOG_LEVEL=INFO
 
 ############################    List Config   #########################
 # A comma separated list of labels to subscribe to and generate lists for
