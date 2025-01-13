@@ -126,7 +126,12 @@ const setupLists = (
         }
         const { description, name } = def.locales[0]
         const existingList = lists.find((l) => l.name === name)
-        if (existingList) return
+        if (existingList) {
+          const uri = Schema.decodeUnknownSync(AtUriSchema)(existingList.uri)
+          yield* setList(label, uri)
+          yield* Effect.log(`Existing list linked for label: ${label}`)
+          return
+        }
 
         // create a list if there is none
         const record: AppBskyGraphList.Record = {
@@ -161,7 +166,7 @@ const setupLists = (
           "LabelNotFound",
           (e) =>
             Effect.logWarning(
-              `Skipping list creation for label: ${e.labelValue}`,
+              `Label "${e.labelValue}" not found, skipping list creation.`,
             ),
         ),
         Effect.catchAll((e) => Effect.logError("Failed to create list", e)),

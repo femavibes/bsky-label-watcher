@@ -25,7 +25,7 @@ export class Cursor extends Effect.Service<Cursor>()("Cursor ", {
 
     const initialValue = yield* fs.readFileString(labelerCursorFilepath).pipe(
       Effect.flatMap(decodeCursor),
-      Effect.tap((cursor) => Effect.log("Loaded cursor from file: ", cursor)),
+      Effect.tap((cursor) => Effect.log(`Loaded cursor from file: ${cursor}`)),
       Effect.catchTag("SystemError", noFileFallback),
     )
 
