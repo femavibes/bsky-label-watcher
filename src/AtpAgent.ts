@@ -20,10 +20,12 @@ export class AtpAgent extends Effect.Service<AtpAgent>()(
       const { agent } = yield* makeAgent
       const env = yield* Env
       const { get, set } = yield* ListService
+
+      yield* setupLists(agent, env, set)
+
       return {
         addUserToList: addUserToList(agent, env, get),
         removeUserFromList: removeUserFromList(agent, env, get),
-        setupLists: setupLists(agent, env, set),
       }
     }),
   },
@@ -32,14 +34,17 @@ export class AtpAgent extends Effect.Service<AtpAgent>()(
     AtpAgent,
     Effect.gen(function*() {
       const { labelsToList } = yield* Env
+      const { set } = yield* ListService
+
+      for (const label of labelsToList) {
+        yield* set(label, `at://list/${label}`)
+        yield* Effect.log(`Created list ${label} for label: ${label}`)
+      }
       return AtpAgent.of({
         _tag: "AtpAgent",
         addUserToList: (did, label) => Effect.log(`Adding ${did} to ${label}`),
         removeUserFromList: (did, label) =>
           Effect.log(`Adding ${did} to ${label}`),
-        setupLists: Effect.gen(function*() {
-          yield* Effect.log(`Setting up lists for ${labelsToList}`)
-        }),
       })
     }),
   )
