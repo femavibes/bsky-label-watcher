@@ -84,6 +84,8 @@ pnpm dev
 ## TODO
 
 - [ ] Add tests
+- [ ] Allow more sophisticated list configuration
+- [ ] Export as a package to integrate into a larger server
 
 ## Operations
 

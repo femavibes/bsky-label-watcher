@@ -5,11 +5,13 @@ services:
     envVars:
       - key: BUN_VERSION
         value: 1.1.34
-      - key: LABELER_PASSWORD
+      - key: LABELER_APP_PASSWORD
         sync: false
       - key: LABELER_DID
         sync: false
       - key: LABELER_SOCKET_URL
+        sync: false
+      - key: LABELS_TO_LIST
         sync: false
       - key: LABELER_CURSOR_FILEPATH
         value: /var/data/cursor.txt
