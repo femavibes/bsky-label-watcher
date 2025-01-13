@@ -1,3 +1,4 @@
+import { Label } from "@/schema"
 import { Config, Effect } from "effect"
 
 export class Env extends Effect.Service<Env>()("Env", {
@@ -10,6 +11,8 @@ export class Env extends Effect.Service<Env>()("Env", {
     const labelerCursorFilepath = yield* Config.string(
       "LABELER_CURSOR_FILEPATH",
     ).pipe(Config.withDefault("cursor.txt"))
+    const labelsToList = yield* Config.array(Config.string(), "LABELS_TO_LIST")
+      .pipe(Effect.map((v) => v.map((l) => Label.make(l))))
 
     return {
       labelerSocketUrl,
@@ -17,6 +20,7 @@ export class Env extends Effect.Service<Env>()("Env", {
       labelerDid,
       labelerPassword,
       labelerCursorFilepath,
+      labelsToList,
     }
   }),
 }) {}

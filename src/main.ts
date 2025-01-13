@@ -32,6 +32,8 @@ import "dotenv/config"
  */
 
 const main = Effect.gen(function*() {
+  yield* Effect.log("Setting up label lists...")
+  // const
   yield* Effect.log("Starting Label Watcher...")
   const { run } = yield* LabelWatcher
   yield* run.pipe(Effect.fork)
