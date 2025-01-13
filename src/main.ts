@@ -9,8 +9,6 @@ import "dotenv/config"
  *   - Readme
  *   - Allow configuring labels to create lists for
  *   - Automatically create lists based on label names
- *   - Export as package
- *   - Allow passing in a custom label map
  *
  * v1:
  *  - Subscribes to websocket with cursor
@@ -25,15 +23,12 @@ import "dotenv/config"
  *    - GET /cursor
  *
  * @NEXT v1.1
- *  - Telemetry
+ *  - Telemetry / Metrics / Dashboard?
  *  - Error logging
  *
  * v1.2
- *  - Open source it?
- *  - Allow customizing list names
  *  - Listen for profile labels as well as account labels
- *  - Multi-tenency. Allow subscribing to multiple labelers. How would you do this?
- *    - One LabelWatcher per labeler? How do you configure it properly?
+ *  - Export it as a package and allow passing in custom label map.
  */
 
 const main = Effect.gen(function*() {
