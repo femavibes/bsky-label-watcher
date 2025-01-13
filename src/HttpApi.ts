@@ -20,7 +20,7 @@ const ServerApi = HttpApi.make("ServerApi").add(
     .add(HttpApiEndpoint.get("cursor")`/cursor`.addSuccess(Schema.Number)),
 )
 
-// Implement the "Greetings" group
+// Implement the "Health" group
 const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
   return handlers
     .handle("health-check", () => Effect.succeed("Looks ok."))
@@ -35,6 +35,7 @@ export const ServerApiLive = HttpApiBuilder.api(ServerApi).pipe(
   Layer.provide(BunHttpServer.layer({})),
 )
 
+// an effect that starts the server and runs until interrupted
 const run = Layer.launch(ServerApiLive)
 
 export class Api extends Effect.Service<Api>()("@labelwatcher/Api", {
@@ -42,6 +43,3 @@ export class Api extends Effect.Service<Api>()("@labelwatcher/Api", {
   succeed: { runApi: run },
 }) {
 }
-
-// Launch the server
-// Layer.launch(ServerLive).pipe(BunRuntime.runMain)

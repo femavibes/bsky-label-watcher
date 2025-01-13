@@ -75,7 +75,7 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
   static Default = Layer.effect(LabelWatcher, makeRun).pipe(
     Layer.provide(RetryingSocket.Default),
     Layer.provide(Cursor.Default),
-    Layer.provide(ListManager.Default),
+    Layer.provide(ListManager.Logging),
     Layer.provide(Env.Default),
   )
 }

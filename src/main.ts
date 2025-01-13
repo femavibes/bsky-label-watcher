@@ -6,6 +6,7 @@ import "dotenv/config"
 
 /**
  * TODO
+ *   - Move ListManager into AtpAgent
  *   - Readme
  *   - Allow configuring labels to create lists for
  *   - Automatically create lists based on label names

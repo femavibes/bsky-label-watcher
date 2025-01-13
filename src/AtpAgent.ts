@@ -19,10 +19,6 @@ export const makeAgent = Effect.gen(function*() {
   })
   yield* Effect.log(`Connected to ATProto as ${session.session?.handle}`)
 
-  if (!session.did) {
-    throw new Error("Login failed")
-  }
-
   // TODO: strict Typescript rules complain about the session not having
   // a did property, but it does. This is a workaround.
   const agent = new Agent(session as SessionManager)
