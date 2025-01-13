@@ -73,10 +73,10 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
   ILabelWatcher
 >() {
   static Default = Layer.effect(LabelWatcher, makeRun).pipe(
-    Layer.provide(Env.Default),
     Layer.provide(RetryingSocket.Default),
     Layer.provide(Cursor.Default),
     Layer.provide(ListManager.Default),
+    Layer.provide(Env.Default),
   )
 }
 
