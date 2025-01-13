@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: Bluesky Label Watcher
+    runtime: node
+    envVars:
+      - key: BUN_VERSION
+        value: 1.1.34
+      - key: LABELER_PASSWORD
+        sync: false
+      - key: LABELER_DID
+        sync: false
+      - key: LABELER_SOCKET_URL
+        sync: false
+      - key: LABELER_CURSOR_FILEPATH
+        value: /var/data/cursor.txt
+    buildCommand: pnpm i --frozen-lockfile
+    startCommand: pnpm run start
+    healthCheckPath: /health
+    disk:
+      name: local-files # Required field
+      mountPath: /var/data # Required field
+      sizeGB: 1 # Default: 10
+version: "1"
