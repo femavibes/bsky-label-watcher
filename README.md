@@ -2,11 +2,23 @@
 
 A Typescript service for creating lists based on a Bluesky labeler's labels. The server will subscribe to the configured labeler, and create a list on the labeler account for each configured label. It will then replay all of the labeler's actions to populate the lists.
 
+## Features
+
+*  Subscribes to websocket with cursor
+*  Retries the socket on failure
+*  Validates payloads as label messages
+*  Adds or removes users from lists in order of labeling.
+    * Does not resolve net changes before applying, so adding a label then removing the label will result in two actions when it could be none.
+*  Saves cursor state to filesystem every 1 second to reconnect at the last known value
+*  Has a basic HttpApi:
+    * GET /health
+    * GET /cursor
+
 ## Configuration
 
 The expected environment variables are:
 
-```
+```sh
 # No need to provide this unless you'd like the override the default
 BSKY_SERVICE="https://bsky.social"
 
@@ -30,22 +42,37 @@ LABELS_TO_LIST=label-identifier-a,label-identifier-b,label-identifier-c
 
 ## Deploying
 
-The easiest way to deploy this service is to use the "Deploy to Render" button below. This will create a new service on Render, and configure it with the environment variables in the Render dashboard.
+The easiest way to deploy this service is to use the "Deploy to Render" button below. Using this button will create a new service on Render which you can configure. It will not have auto-deploy enabled, so you will need to manually redeploy the service if you want to pull in new updates from this git repo.
 
 <a href="https://render.com/deploy?repo=https://github.com/kristojorg/bsky-labeler-directory">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
 </a>
 
-## Running Code
 
-This packages uses Bun and Effect.
+Alternatively, you may clone this repository and deploy it to whatever service you prefer. I would gladly accept PRs to add alternative deploy buttons or a Dockerfile!
 
-```
+## Making changes
+
+When you apply a label to an account, it will automatically add that account to the list for that label (if you have enabled it). If you create a _new label_ in your labeler, and you want to create a list for it, you will need to update the `LABELS_TO_LIST` environment variable and redeploy the service.
+
+Ensure that you update the `LABELS_TO_LIST` environment variable with the new label id and redeploy **before applying any labels with it**. If you don't, the service will "miss" any labels that were applied before you updated. If this happens, you can fix it by rewinding the cursor in the `LABELER_CURSOR_FILEPATH` file and redeploying.
+
+## Rate limits
+
+Bluesky has a [pretty sensible rate limits](https://docs.bsky.app/docs/advanced-guides/rate-limits), and I wouldn't expect this service to hit them. However, if you do run in to them, please open an issue and we can make the service a little more rate-limit-aware.
+
+# Development
+
+This packages uses [Bun](https://bun.sh/) and [Effect](https://effect.website/). Effect can be a bit intimidating at first, but it is an extremely powerful tool that has enabled me to develop this package with much more certainty and developer efficiency than I would have had otherwise.
+
+First install dependencies:
+```sh
 pnpm i
 ```
 
-```
-pnpm start
+Then start the development server:
+```sh
+pnpm dev
 ```
 
 ## TODO
