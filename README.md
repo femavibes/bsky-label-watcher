@@ -50,7 +50,7 @@ LABELS_TO_LIST=label-identifier-a,label-identifier-b,label-identifier-c
 
 The easiest way to deploy this service is to use the "Deploy to Render" button below. Using this button will create a new service on Render which you can configure. It will not have auto-deploy enabled, so you will need to manually redeploy the service if you want to pull in new updates from this git repo.
 
-<a href="https://render.com/deploy?repo=https://github.com/kristojorg/bsky-labeler-watcher">
+<a href="https://render.com/deploy?repo=https://github.com/kristojorg/bsky-label-watcher">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
 </a>
 
