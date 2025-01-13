@@ -1,4 +1,6 @@
-# Bluesky Directory Maker
+# Bluesky Label Watcher
+
+Make lists from your Bluesky labeler! 
 
 A Typescript service for creating lists based on a Bluesky labeler's labels. The server will subscribe to the configured labeler, and create a list on the labeler account for each configured label. It will then replay all of the labeler's actions to populate the lists.
 
