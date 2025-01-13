@@ -1,3 +1,4 @@
+import { Cursor } from "@/Cursor"
 import { Api } from "@/HttpApi"
 import { LabelWatcher } from "@/LabelWatcher"
 import { LoggerLive } from "@/logger"
@@ -6,6 +7,7 @@ import { Layer, ManagedRuntime } from "effect"
 export const AppLiveLayer = Layer.mergeAll(
   LabelWatcher.Default,
   Api.Default,
+  Cursor.Default,
 )
 
 const WithLogger = Layer.provide(AppLiveLayer, LoggerLive)

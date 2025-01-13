@@ -31,7 +31,6 @@ const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
 export const ServerApiLive = HttpApiBuilder.api(ServerApi).pipe(
   Layer.provide(HealthLive),
   HttpServer.withLogAddress,
-  Layer.provide(Cursor.Default),
   Layer.provide(BunHttpServer.layer({})),
 )
 
