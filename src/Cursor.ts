@@ -15,6 +15,9 @@ import {
 } from "effect"
 import { NumberFromString } from "effect/Schema"
 
+/**
+ * Keeps a vursor value synced to the filesystem.
+ */
 export class Cursor extends Effect.Service<Cursor>()("Cursor ", {
   accessors: true,
   dependencies: [Env.Default, BunFileSystem.layer],
