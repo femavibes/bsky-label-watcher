@@ -1,3 +1,12 @@
+/**
+ * This is useful for testing socket retries.
+ *
+ * Run this file with `bun src/__test__/socket-harness.ts`
+ *
+ * Then input the socket url as the LABELER_SOCKET_URL in the .env.local file
+ * to observe the socket retrying. (you will have to remove message parsing, etc)
+ */
+
 Bun.serve({
   port: 8080,
 
@@ -29,7 +38,6 @@ Bun.serve({
     message(ws, message) {
       console.log("Received message:", message)
     },
-
     // error(ws, error) {
     //   console.error("WebSocket error:", error)
     // },
