@@ -2,6 +2,7 @@ import { Api } from "@/HttpApi"
 import { LabelWatcher } from "@/LabelWatcher"
 import { AppRuntime } from "@/services/AppRuntime"
 import { Effect } from "effect"
+import "dotenv/config"
 
 const main = Effect.gen(function*() {
   yield* Effect.log("Starting Pro Cycling Server...")
