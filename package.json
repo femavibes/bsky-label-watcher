@@ -1,5 +1,5 @@
 {
-  "name": "@kristojorg/bsky-labeler-directory",
+  "name": "@kristojorg/bsky-labeler-watcher",
   "author": "Kristo Jorgenson <@kristojorg>",
   "version": "0.0.0",
   "type": "module",
@@ -9,7 +9,7 @@
   "module": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kristojorg/bsky-labeler-directory"
+    "url": "https://github.com/kristojorg/bsky-labeler-watcher"
   },
   "publishConfig": {
     "access": "public",
