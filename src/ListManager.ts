@@ -1,7 +1,7 @@
 import { AtpAgent, AtpError } from "@/AtpAgent"
 import { labelToListUri } from "@/lists"
 import type { Did, Label } from "@/schema"
-import { Env } from "@/services/Environment"
+import { Env } from "@/Environment"
 import type { Agent } from "@atproto/api"
 import { AtUri } from "@atproto/api"
 import { Effect, Layer } from "effect"

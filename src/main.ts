@@ -1,6 +1,6 @@
+import { AppRuntime } from "@/AppRuntime"
 import { Api } from "@/HttpApi"
 import { LabelWatcher } from "@/LabelWatcher"
-import { AppRuntime } from "@/services/AppRuntime"
 import { Effect } from "effect"
 import "dotenv/config"
 

@@ -1,4 +1,4 @@
-import { Env } from "@/services/Environment"
+import { Env } from "@/Environment"
 import { decodeFirst } from "@atcute/cbor"
 import { Context, Data, Effect, Layer, Schema, Stream } from "effect"
 import { RetryingSocket } from "./RetryingSocket"

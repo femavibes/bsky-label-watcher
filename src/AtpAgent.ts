@@ -1,4 +1,4 @@
-import { Env } from "@/services/Environment"
+import { Env } from "@/Environment"
 import { Agent, CredentialSession } from "@atproto/api"
 import type { SessionManager } from "@atproto/api/dist/session-manager"
 import { Data, Effect, Redacted } from "effect"
