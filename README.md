@@ -1,15 +1,17 @@
-# Effect Package Template
+# Bluesky Directory Maker
 
-This template provides a solid foundation for building scalable and maintainable TypeScript package with Effect. 
+This is a Typescript service for generating Bluesky lists from Bluesky labelers.
 
 ## Running Code
 
-This template leverages [tsx](https://tsx.is) to allow execution of TypeScript files via NodeJS as if they were written in plain JavaScript.
+This packages uses Bun and Effect.
 
-To execute a file with `tsx`:
+```
+pnpm i
+```
 
-```sh
-pnpm tsx ./path/to/the/file.ts
+```
+pnpm start
 ```
 
 ## Operations

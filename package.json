@@ -1,11 +1,12 @@
 {
-  "name": "@template/basic",
+  "name": "@kristojorg/bsky-labeler-directory",
   "author": "Kristo Jorgenson <@kristojorg>",
   "version": "0.0.0",
   "type": "module",
   "packageManager": "pnpm@9.10.0",
   "license": "MIT",
-  "description": "A basic Effect package",
+  "description": "A servive for making Bluesky lists from a labeler service's labels.",
+  "module": "src/index.ts",
   "repository": {
     "type": "git",
     "url": "https://github.com/kristojorg/bsky-labeler-directory"
@@ -57,7 +58,8 @@
     "eslint-plugin-sort-destructure-keys": "^2.0.0",
     "tsx": "^4.17.0",
     "typescript": "^5.6.2",
-    "vitest": "^2.0.5"
+    "vitest": "^2.0.5",
+    "@types/bun": "latest"
   },
   "effect": {
     "generateExports": {
