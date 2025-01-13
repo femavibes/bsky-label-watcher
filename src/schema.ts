@@ -1,6 +1,12 @@
 import { AtUri } from "@atproto/api"
 import { Schema } from "effect"
 
+/**
+ * Effect Schema for AtProto APIs
+ *
+ * This should eventually be moved out into a separate package and made complete.
+ */
+
 export const DidTypeId = Symbol.for("@@did")
 export const Did = Schema.TemplateLiteral("did:", Schema.String).pipe(
   Schema.brand(DidTypeId),
