@@ -54,8 +54,15 @@ export class Cursor extends Effect.Service<Cursor>()("Cursor ", {
         yield* q.offer(value)
       })
 
+    const setImmediate = (value: number) =>
+      Effect.gen(function*() {
+        yield* Ref.set(cursorRef, value)
+        yield* writeCursor(env, fs)(value)
+      })
+
     return {
       set,
+      setImmediate,
       get: cursorRef.get,
       start,
     }
