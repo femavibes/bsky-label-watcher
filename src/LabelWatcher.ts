@@ -51,9 +51,9 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
 >() {
   static Default = Layer.effect(LabelWatcher, makeRun).pipe(
     Layer.provide(RetryingSocket.Default),
+    Layer.provide(AtpAgent.Logging),
     Layer.provide(Cursor.Default),
     Layer.provide(Env.Default),
-    Layer.provide(AtpAgent.Default),
   )
 }
 

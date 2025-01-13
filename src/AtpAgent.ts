@@ -47,6 +47,9 @@ export class AtpAgent extends Effect.Service<AtpAgent>()(
           Effect.log(`Adding ${did} to ${label}`),
       })
     }),
+  ).pipe(
+    Layer.provide(ListService.Default),
+    Layer.provide(Env.Default),
   )
 }
 
@@ -118,64 +121,53 @@ const setupLists = (
       Effect.map((r) => r.data.lists),
     )
 
-    const makeListEffects = labelsToList.map((label) =>
-      Effect.gen(function*() {
-        const def = labelDefs.find((d) => d.identifier === label)
-        if (!def) {
-          return yield* new LabelNotFound({ labelValue: label })
-        }
-        const { description, name } = def.locales[0]
-        const existingList = lists.find((l) => l.name === name)
-        if (existingList) {
-          const uri = Schema.decodeUnknownSync(AtUriSchema)(existingList.uri)
-          yield* setList(label, uri)
-          yield* Effect.log(`Existing list linked for label: ${label}`)
-          return
-        }
+    for (const label of labelsToList) {
+      const def = labelDefs.find((d) => d.identifier === label)
+      if (!def) {
+        yield* Effect.logWarning(
+          `Label "${label}" not found, skipping list creation.`,
+        )
+        continue
+      }
+      const { description, name } = def.locales[0]
+      const existingList = lists.find((l) => l.name === name)
+      if (existingList) {
+        const uri = Schema.decodeUnknownSync(AtUriSchema)(existingList.uri)
+        yield* setList(label, uri)
+        yield* Effect.log(`Existing list linked for label: ${label}`)
+        continue
+      }
 
-        // create a list if there is none
-        const record: AppBskyGraphList.Record = {
-          purpose: "app.bsky.graph.defs#curatelist",
-          name,
-          description,
-          createdAt: new Date().toISOString(),
-        }
+      // create a list if there is none
+      const record: AppBskyGraphList.Record = {
+        purpose: "app.bsky.graph.defs#curatelist",
+        name,
+        description,
+        createdAt: new Date().toISOString(),
+      }
 
-        const result = yield* Effect.tryPromise({
-          try: () =>
-            agent.app.bsky.graph.list.create(
-              {
-                repo: labelerDid,
-              },
-              record,
-            ),
-          catch: (cause) =>
-            new AtpError({ message: "Failed to create list", cause }),
-        })
-        const uri = Schema.decodeUnknownOption(AtUriSchema)(result.uri)
-        if (Option.isNone(uri)) {
-          yield* Effect.logError("Failed to decode list uri", result.uri)
-          return
-        }
-        // add the list to our listmap
-        yield* setList(label, uri.value)
+      const result = yield* Effect.tryPromise({
+        try: () =>
+          agent.app.bsky.graph.list.create(
+            {
+              repo: labelerDid,
+            },
+            record,
+          ),
+        catch: (cause) =>
+          Effect.logError(`Failed to create list for label: ${label}`, cause)
+            .pipe(Effect.asVoid),
+      })
+      const uri = Schema.decodeUnknownOption(AtUriSchema)(result.uri)
+      if (Option.isNone(uri)) {
+        yield* Effect.logError("Failed to decode list uri", result.uri)
+        continue
+      }
+      // add the list to our listmap
+      yield* setList(label, uri.value)
 
-        yield* Effect.log(`Created list ${name} for label: ${label}`)
-      }).pipe(
-        Effect.catchTag(
-          "LabelNotFound",
-          (e) =>
-            Effect.logWarning(
-              `Label "${e.labelValue}" not found, skipping list creation.`,
-            ),
-        ),
-        Effect.catchAll((e) => Effect.logError("Failed to create list", e)),
-        Effect.asVoid,
-      )
-    )
-
-    // create the lists, 8 at a time
-    yield* Effect.all(makeListEffects, { concurrency: 8 })
+      yield* Effect.log(`Created list ${name} for label: ${label}`)
+    }
   }).pipe(Effect.asVoid)
 
 const removeUserFromList = (
