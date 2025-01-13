@@ -3,7 +3,7 @@ services:
     name: Bluesky Label Watcher
     runtime: node
     autoDeploy: false
-    plan: free
+    plan: starter
     envVars:
       - key: BUN_VERSION
         value: 1.1.34
