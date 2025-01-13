@@ -1,7 +1,7 @@
 import { Api } from "@/HttpApi"
 import { LabelWatcher } from "@/LabelWatcher"
 import { AppRuntime } from "@/Runtime"
-import { Effect } from "effect"
+import { Effect, Logger, LogLevel } from "effect"
 import "dotenv/config"
 
 /**
@@ -9,6 +9,7 @@ import "dotenv/config"
  *   - Readme
  *   - Allow configuring labels to create lists for
  *   - Automatically create lists based on label names
+ *   - Why is cursor intantiated twice?
  *
  * v1:
  *  - Subscribes to websocket with cursor
@@ -41,6 +42,8 @@ const main = Effect.gen(function*() {
   const { runApi } = yield* Api
   // start the http server
   yield* runApi
-})
+}).pipe(
+  Logger.withMinimumLogLevel(LogLevel.Debug),
+)
 
 AppRuntime.runPromise(main)

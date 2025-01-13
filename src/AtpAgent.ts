@@ -10,12 +10,12 @@ import { Agent, type AppBskyGraphList } from "@atproto/api"
 import { AtUri, CredentialSession } from "@atproto/api"
 import { isLabelerViewDetailed } from "@atproto/api/dist/client/types/app/bsky/labeler/defs"
 import type { SessionManager } from "@atproto/api/dist/session-manager"
-import { Data, Effect, Layer, Option, Redacted, Schema } from "effect"
+import { Data, Effect, Layer, Option, Schema } from "effect"
 
 export class AtpAgent extends Effect.Service<AtpAgent>()(
   "AtpAgent",
   {
-    dependencies: [Env.Default],
+    dependencies: [Env.Default, ListService.Default],
     effect: Effect.gen(function*() {
       const { agent } = yield* makeAgent
       const env = yield* Env
@@ -59,10 +59,10 @@ export const makeAgent = Effect.gen(function*() {
     try: () =>
       session.login({
         identifier: labelerDid,
-        password: Redacted.value(labelerPassword),
+        password: labelerPassword,
       }),
     catch: (cause) =>
-      new AtpError({ message: "Failed to login to Atp", cause }),
+      new AtpError({ message: "Failed to login to ATProto", cause }),
   })
   yield* Effect.log(`Connected to ATProto as ${session.session?.handle}`)
 
