@@ -11,7 +11,7 @@
     "skipLibCheck": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    "moduleResolution": "NodeNext",
+    "moduleResolution": "bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": [],
     "isolatedModules": true,
@@ -30,11 +30,15 @@
     "noImplicitThis": true,
     "noUncheckedIndexedAccess": false,
     "strictNullChecks": true,
-    "baseUrl": ".",
+    "baseUrl": "src",
     "target": "ES2022",
     "module": "NodeNext",
     "incremental": true,
     "removeComments": false,
-    "plugins": [{ "name": "@effect/language-service" }]
-  }
+    "plugins": [{ "name": "@effect/language-service" }],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  
 }

@@ -1,5 +1,53 @@
-import { Did } from "#/packages/shared"
+import { AtUri } from "@atproto/api"
 import { Schema } from "effect"
+
+export const DidTypeId = Symbol.for("@@did")
+export const Did = Schema.TemplateLiteral("did:", Schema.String).pipe(
+  Schema.brand(DidTypeId),
+  Schema.annotations({
+    identifier: "Did",
+  }),
+)
+export type Did = Schema.Schema.Type<typeof Did>
+
+export const CidTypeId = Symbol.for("@@cid")
+export const Cid = Schema.NonEmptyString.pipe(Schema.brand(CidTypeId))
+export type Cid = Schema.Schema.Type<typeof Cid>
+
+export const HandleTypeId = Symbol.for("@@handle")
+export const Handle = Schema.String.pipe(Schema.brand(HandleTypeId))
+export type Handle = Schema.Schema.Type<typeof Handle>
+
+export const RkeyTypeId = Symbol.for("@@rkey")
+export const Rkey = Schema.String.pipe(Schema.brand(RkeyTypeId))
+export type Rkey = Schema.Schema.Type<typeof Rkey>
+
+export const AtUriPrefix = Schema.Literal("at://")
+
+// we can't make this a union of other template literals yet
+export const HandleOrDid = Schema.Union(Handle, Did)
+
+export const AtUriSchema = Schema.TemplateLiteral(AtUriPrefix, Schema.String)
+export type AtUriSchemaType = Schema.Schema.Type<typeof AtUriSchema>
+
+export const BskyPostCollection = Schema.Literal("app.bsky.feed.post")
+export type BskyPostCollection = Schema.Schema.Type<typeof BskyPostCollection>
+
+export const BskyPostUrlTuple = Schema.TemplateLiteralParser(
+  "https://bsky.app/profile/",
+  Handle,
+  "/post/",
+  Rkey,
+)
+export type BskyPostUrlTuple = Schema.Schema.Type<typeof BskyPostUrlTuple>
+export type BskyPostUrl = Schema.Schema.Encoded<typeof BskyPostUrlTuple>
+
+export const parseBskyPostUrl = (url: string) =>
+  Schema.decodeUnknown(BskyPostUrlTuple)(url)
+
+export function makePostUri(userDid: Did, rkey: Rkey): string {
+  return AtUri.make(userDid, "app.bsky.feed.post", rkey).toString()
+}
 
 const LabelsType = Schema.Literal("#labels")
 

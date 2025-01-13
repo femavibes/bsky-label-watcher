@@ -1,5 +1,5 @@
-import type { AtUriSchemaType } from "#/packages/shared";
-import { Label } from "./LabelWatcher/schema.js";
+import type { AtUriSchemaType } from "./schema.js"
+import { Label } from "./schema.js"
 
 export const labelToListUri: Record<Label, AtUriSchemaType> = {
   [Label.make("cycling-fan")]:
@@ -28,4 +28,4 @@ export const labelToListUri: Record<Label, AtUriSchemaType> = {
     "at://did:plc:2qhdv5xwffbogrfoqcqzpady/app.bsky.graph.list/3lfacghtjks2c",
   [Label.make("tribute-account")]:
     "at://did:plc:2qhdv5xwffbogrfoqcqzpady/app.bsky.graph.list/3lfach7p2er27",
-} as const;
+} as const

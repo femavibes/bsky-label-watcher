@@ -7,7 +7,7 @@ import { Data, Effect, Schedule, Stream } from "effect"
  */
 const wsStream = ({ url }: { url: string | URL }) =>
   Stream.asyncPush<Uint8Array<ArrayBufferLike>, SocketError>((emit) =>
-    Effect.gen(function* () {
+    Effect.gen(function*() {
       yield* Effect.log("Connecting to websocket at: ", url.toString())
       const socket = yield* Socket.makeWebSocket(url.toString(), {
         closeCodeIsError: (_) => true,
@@ -15,14 +15,14 @@ const wsStream = ({ url }: { url: string | URL }) =>
 
       const e = socket
         .run((d) =>
-          Effect.gen(function* () {
+          Effect.gen(function*() {
             const didEmit = emit.single(d)
             if (!didEmit) {
               yield* new BufferOverflowError({
                 message: "Socket buffer overflowed, failed to emit a message.",
               })
             }
-          }),
+          })
         )
         .pipe(
           Effect.catchTag("SocketError", (e) => Effect.succeed(emit.fail(e))),
@@ -30,7 +30,7 @@ const wsStream = ({ url }: { url: string | URL }) =>
         )
 
       yield* e
-    }).pipe(Effect.provide(Socket.layerWebSocketConstructorGlobal)),
+    }).pipe(Effect.provide(Socket.layerWebSocketConstructorGlobal))
   ).pipe(
     Stream.tapErrorCause(Effect.logError),
     Stream.retry(Schedule.spaced("1 second")),

@@ -111,7 +111,7 @@ export default [
           lineWidth: 80,
           semiColons: "asi",
           quoteStyle: "alwaysDouble",
-          trailingCommas: "always",
+          trailingCommas: "onlyMultiLine",
           operatorPosition: "maintain",
           "arrowFunction.useParentheses": "force",
         },

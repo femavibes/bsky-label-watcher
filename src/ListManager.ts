@@ -1,17 +1,15 @@
-import type { Did } from "#/packages/shared"
-import { AtpError } from "#/packages/shared/AtProto/AtpAgent"
-import { LabelerAgent } from "@/LabelWatcher/LabelerAgent"
+import { AtpAgent, AtpError } from "@/AtpAgent"
+import { labelToListUri } from "@/lists"
+import type { Did, Label } from "@/schema"
+import { Env } from "@/services/Environment"
 import type { Agent } from "@atproto/api"
 import { AtUri } from "@atproto/api"
-import { labelToListUri } from "@/LabelWatcher/lists"
-import type { Label } from "@/LabelWatcher/schema"
-import { Env } from "@/services/Environment"
 import { Effect, Layer } from "effect"
 
 export class ListManager extends Effect.Service<ListManager>()("ListManager", {
-  dependencies: [LabelerAgent.Default, Env.Default],
-  effect: Effect.gen(function* () {
-    const { agent } = yield* LabelerAgent
+  dependencies: [AtpAgent.Default, Env.Default],
+  effect: Effect.gen(function*() {
+    const { agent } = yield* AtpAgent
     const env = yield* Env
 
     return {
@@ -33,7 +31,7 @@ export class ListManager extends Effect.Service<ListManager>()("ListManager", {
 
 const removeUserFromList =
   (agent: Agent, env: Env) => (did: Did, label: Label) =>
-    Effect.gen(function* () {
+    Effect.gen(function*() {
       const { labelerDid } = env
       const listUri = labelToListUri[label]
 
@@ -63,12 +61,14 @@ const removeUserFromList =
       })
       yield* Effect.log(`Removed user ${did} from list ${label}`)
     }).pipe(
-      Effect.catchAll(logOrWarn(`Failed to remove ${did} from list ${label}`)),
+      Effect.catchAll(
+        logOrWarn(`Failed to remove ${did} from list ${label}`),
+      ),
     )
 
 const addUserToList =
   (agent: Agent, env: Env) => (userToAdd: Did, label: Label) =>
-    Effect.gen(function* () {
+    Effect.gen(function*() {
       const { labelerDid } = env
       const listUri = labelToListUri[label] as string | undefined
 
@@ -93,11 +93,13 @@ const addUserToList =
       })
       yield* Effect.log(`Added user ${userToAdd} to list ${label}`)
     }).pipe(
-      Effect.catchAll(logOrWarn(`Failed to add ${userToAdd} to list ${label}`)),
+      Effect.catchAll(
+        logOrWarn(`Failed to add ${userToAdd} to list ${label}`),
+      ),
     )
 
 const logOrWarn = (message: string) => (e: unknown) =>
-  Effect.gen(function* () {
+  Effect.gen(function*() {
     yield* Effect.logWarning(message)
     yield* Effect.logDebug(e)
   })

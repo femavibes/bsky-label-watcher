@@ -1,17 +1,13 @@
-import { Env } from "@/services/Environment";
-import { RetryingSocket } from "./LabelWatcher/RetryingSocket.js";
-import { Context, Data, Effect, Layer, Schema, Stream } from "effect";
-import { decodeFirst } from "@atcute/cbor";
-import {
-  MessageLabels,
-  parseSubscribeLabelsMessage,
-} from "./LabelWatcher/schema.js";
+import { Env } from "@/services/Environment"
+import { decodeFirst } from "@atcute/cbor"
+import { Context, Data, Effect, Layer, Schema, Stream } from "effect"
+import { RetryingSocket } from "./RetryingSocket"
+import { MessageLabels, parseSubscribeLabelsMessage } from "./schema"
 
-import { Cursor } from "./Cursor";
-import { ListManager } from "@/LabelWatcher/ListManager";
+import { ListManager } from "@/ListManager"
+import { Cursor } from "./Cursor"
 
 /**
- *
  * v1:
  *  - Subscribes to websocket with cursor
  *  - Retries the socket on failure
@@ -34,28 +30,28 @@ import { ListManager } from "@/LabelWatcher/ListManager";
  */
 
 const handleMessageError = (e: unknown) =>
-  Effect.gen(function* () {
-    yield* Effect.logError(e);
-    return Effect.succeed(undefined);
-  });
+  Effect.gen(function*() {
+    yield* Effect.logError(e)
+    return Effect.succeed(undefined)
+  })
 
-const makeRun = Effect.gen(function* () {
-  const connect = yield* RetryingSocket;
-  const manager = yield* ListManager;
-  const cursor = yield* Cursor;
-  const initialCursor = yield* cursor.get;
-  const { labelerSocketUrl } = yield* Env;
-  labelerSocketUrl.searchParams.set("cursor", initialCursor.toString());
+const makeRun = Effect.gen(function*() {
+  const connect = yield* RetryingSocket
+  const manager = yield* ListManager
+  const cursor = yield* Cursor
+  const initialCursor = yield* cursor.get
+  const { labelerSocketUrl } = yield* Env
+  labelerSocketUrl.searchParams.set("cursor", initialCursor.toString())
 
-  const stream = connect({ url: labelerSocketUrl });
+  const stream = connect({ url: labelerSocketUrl })
 
   const runStream = stream.pipe(
     Stream.mapEffect(parseMessage),
     Stream.catchAll(handleMessageError),
     Stream.filter(Schema.is(MessageLabels, { exact: false })),
     Stream.mapEffect(handleLabel(manager)),
-    Stream.runForEach(cursor.set)
-  );
+    Stream.runForEach(cursor.set),
+  )
 
   // run the stream and cursor concurrently
   const run = Effect.all(
@@ -63,13 +59,13 @@ const makeRun = Effect.gen(function* () {
       stream: runStream,
       cursor: cursor.start,
     },
-    { concurrency: 2 }
-  );
-  return { run };
-});
+    { concurrency: 2 },
+  )
+  return { run }
+})
 
 interface ILabelWatcher {
-  run: Effect.Effect<void>;
+  run: Effect.Effect<void>
 }
 
 export class LabelWatcher extends Context.Tag("LabelWatcher")<
@@ -80,8 +76,8 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
     Layer.provide(Env.Default),
     Layer.provide(RetryingSocket.Default),
     Layer.provide(Cursor.Default),
-    Layer.provide(ListManager.Default)
-  );
+    Layer.provide(ListManager.Default),
+  )
 }
 
 /**
@@ -92,30 +88,30 @@ export class LabelWatcher extends Context.Tag("LabelWatcher")<
  * Returns the sequence to be saved as a cursor
  */
 const handleLabel = (manager: ListManager) => (label: MessageLabels) =>
-  Effect.gen(function* () {
-    const labels = label.body.labels;
+  Effect.gen(function*() {
+    const labels = label.body.labels
     for (const label of labels) {
       if (label.neg) {
-        yield* manager.removeUserFromList(label.uri, label.val);
-        continue;
+        yield* manager.removeUserFromList(label.uri, label.val)
+        continue
       }
-      yield* manager.addUserToList(label.uri, label.val);
+      yield* manager.addUserToList(label.uri, label.val)
     }
-    return label.body.seq;
-  });
+    return label.body.seq
+  })
 
 const parseMessage = (u: Uint8Array) =>
-  Effect.gen(function* () {
-    const [header, remainder] = decodeFirst(u);
-    const [body, remainder2] = decodeFirst(remainder);
+  Effect.gen(function*() {
+    const [header, remainder] = decodeFirst(u)
+    const [body, remainder2] = decodeFirst(remainder)
     if (remainder2.length > 0) {
-      yield* new SocketDecodeError({ message: "Excess bytes in message" });
+      yield* new SocketDecodeError({ message: "Excess bytes in message" })
     }
-    const message = yield* parseSubscribeLabelsMessage({ ...header, body });
-    return message;
-  });
+    const message = yield* parseSubscribeLabelsMessage({ ...header, body })
+    return message
+  })
 
 export class SocketDecodeError extends Data.TaggedError("SocketDecodeError")<{
-  message: string;
-  cause?: unknown;
+  message: string
+  cause?: unknown
 }> {}
