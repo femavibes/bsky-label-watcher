@@ -49,7 +49,6 @@ export class Cursor extends Effect.Service<Cursor>()("Cursor ", {
       Stream.filter(Option.isSome),
       Stream.map((o) => o.value),
       Stream.runForEach(writeCursor(env, fs)),
-      Stream.runDrain,
     )
 
     const set = (value: number) =>
