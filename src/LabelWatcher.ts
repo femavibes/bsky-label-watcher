@@ -1,7 +1,7 @@
 import { AtpAgent } from "@/AtpAgent"
 import { Env } from "@/Environment"
 import { decodeFirst } from "@atcute/cbor"
-import { Context, Data, Effect, Layer, Schema, Stream } from "effect"
+import { Data, Effect, Layer, Schema, Stream } from "effect"
 import { Cursor } from "./Cursor"
 import { RetryingSocket } from "./RetryingSocket"
 import { MessageLabels, parseSubscribeLabelsMessage } from "./schema"
@@ -9,10 +9,10 @@ import { MessageLabels, parseSubscribeLabelsMessage } from "./schema"
 const handleMessageError = (e: unknown) =>
   Effect.gen(function*() {
     yield* Effect.logError(e)
-    return Effect.succeed(undefined)
+    return yield* Effect.succeed(undefined).pipe(Effect.asVoid)
   })
 
-const makeRun = Effect.gen(function*() {
+const run = Effect.gen(function*() {
   const connect = yield* RetryingSocket
   const agent = yield* AtpAgent
   const cursor = yield* Cursor
@@ -31,31 +31,26 @@ const makeRun = Effect.gen(function*() {
   )
 
   // run the stream and cursor concurrently
-  const run = Effect.all(
+  const start = Effect.all(
     {
       stream: runStream,
       cursor: cursor.start,
     },
     { concurrency: 2 },
-  )
-  return { run }
+  ).pipe(Effect.asVoid)
+  return yield* start
 })
 
-interface ILabelWatcher {
-  run: Effect.Effect<void>
-}
+const LabelWatcherDeps = Layer.mergeAll(
+  RetryingSocket.Default,
+  AtpAgent.Logging,
+  Cursor.Default,
+  Env.Default,
+)
 
-export class LabelWatcher extends Context.Tag("LabelWatcher")<
-  LabelWatcher,
-  ILabelWatcher
->() {
-  static Default = Layer.effect(LabelWatcher, makeRun).pipe(
-    Layer.provide(RetryingSocket.Default),
-    Layer.provide(AtpAgent.Logging),
-    Layer.provide(Cursor.Default),
-    Layer.provide(Env.Default),
-  )
-}
+export const LabelWatcherLive = Layer.scopedDiscard(run).pipe(
+  Layer.provide(LabelWatcherDeps),
+)
 
 /**
  * Handle each by adding or removing users from lists. Note we do not

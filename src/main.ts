@@ -1,5 +1,5 @@
 import { ApiLive } from "@/HttpApi"
-import { LabelWatcher } from "@/LabelWatcher"
+import { LabelWatcherLive } from "@/LabelWatcher"
 import { LoggerLive } from "@/logger"
 import { Layer } from "effect"
 import "dotenv/config"
@@ -28,7 +28,7 @@ import { BunRuntime } from "@effect/platform-bun"
  */
 
 export const MainLiveLayer = Layer.mergeAll(
-  LabelWatcher.Default,
+  LabelWatcherLive,
   ApiLive,
 ).pipe(
   Layer.provide(LoggerLive),
