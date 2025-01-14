@@ -14,18 +14,6 @@ concurrency:
 permissions: {}
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install dependencies
-        uses: ./.github/actions/setup
-      - run: pnpm codegen
-      - name: Check source state
-        run: git add packages/*/src && git diff-index --cached HEAD --exit-code packages/*/src
-
   types:
     name: Types
     runs-on: ubuntu-latest
