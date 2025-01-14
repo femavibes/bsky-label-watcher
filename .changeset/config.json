@@ -1,10 +1,7 @@
 {
   "$schema": "https://unpkg.com/@changesets/config@3.0.2/schema.json",
   "changelog": [
-    "@changesets/changelog-github",
-    {
-      "repo": "https://github.com/kristojorg/bsky-label-watcher"
-    }
+    "@changesets/changelog-git"
   ],
   "commit": false,
   "fixed": [],
