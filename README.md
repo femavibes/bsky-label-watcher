@@ -50,14 +50,36 @@ LABELS_TO_LIST=label-identifier-a,label-identifier-b,label-identifier-c
 
 ## Deploying
 
+### Docker
+
+The package is available on Docker Hub at kristojorgenson/bsky-label-watcher. You can run it with the following command:
+
+```sh
+docker run \
+ --pull
+ -v $(pwd)/data:/var/data \
+ --env-file .env.local \
+ -e CURSOR_FILEPATH=/var/data/cursor.txt \
+ -e LOG_FILEPATH=/var/data/log.txt \
+ kristojorgenson/bsky-label-watcher
+```
+* `--pull` will ensure that the latest image is pulled from Docker Hub.
+* `-e CURSOR_FILEPATH=/var/data/cursor.txt` and `LOG_FILEPATH` env can be set in the command line as above, or in the `.env.local` file, but they need to be a subdirectory of `/var/data` as this is the directory with write permissions.
+* `-v $(pwd)/data:/var/data` will bind the `/var/data` directory in the container to the `data` directory in the current working directory on the host machine.
+* `--env-file .env.local` will load the environment variables from the `.env.local` file in the current working directory.
+
+
+### Render
+
 The easiest way to deploy this service is to use the "Deploy to Render" button below. Using this button will create a new service on Render which you can configure. It will not have auto-deploy enabled, so you will need to manually redeploy the service if you want to pull in new updates from this git repo.
 
 <a href="https://render.com/deploy?repo=https://github.com/kristojorg/bsky-label-watcher">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
 </a>
 
+### Other
 
-Alternatively, you may clone this repository and deploy it to whatever service you prefer. I would gladly accept PRs to add alternative deploy buttons or a Dockerfile!
+You may also clone the repo and deploy it another way, or submit a PR to add a deployment method.
 
 ## Making changes
 
