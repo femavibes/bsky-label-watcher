@@ -52,7 +52,7 @@ LABELS_TO_LIST=label-identifier-a,label-identifier-b,label-identifier-c
 
 ### Docker
 
-The package is available on Docker Hub at kristojorgenson/bsky-label-watcher. You can run it with the following command:
+The package is available on Docker Hub at [kristojorgenson/bsky-label-watcher](https://hub.docker.com/repository/docker/kristojorgenson/bsky-label-watcher/general). You can run it with the following command:
 
 ```sh
 docker run \
