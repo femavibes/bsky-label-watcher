@@ -2,6 +2,7 @@ services:
   - type: web
     name: Bluesky Label Watcher
     runtime: node
+    region: ohio
     autoDeploy: false
     plan: starter
     envVars:

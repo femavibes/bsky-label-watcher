@@ -7,6 +7,7 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
 ## Features
 
 *  Sets up lists on your labelers account based on your label's display name and description.
+    * Initializes lists with the same name and description as the label in your labelers service record.
 *  Subscribes to your labeler's websocket
     *  Allows starting from `cursor=0` to get all existing labels
 *  Retries the socket on failures
@@ -17,6 +18,7 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
 *  Has a basic HttpApi:
     * GET /health
     * GET /cursor
+*  Writes logs to both `stdout` and `LOG_FILEPATH` (default: `log.txt`)
 
 ## Configuration
 
@@ -85,19 +87,21 @@ pnpm dev
 
 - [ ] Add tests
 - [ ] Allow more sophisticated list configuration
+  - [ ] Custom list names
+  - [ ] Custom list descriptions
 - [ ] Export as a package to integrate into a larger server
 
 ## Operations
 
-**Building**
+### Building
 
-To build the package:
+When run using Bun, you don't need to build this package. Just run the source code directly using Bun.
 
 ```sh
-pnpm build
+pnpm dev
 ```
 
-**Testing**
+### Testing
 
 To test the package:
 
