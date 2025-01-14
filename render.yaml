@@ -17,8 +17,8 @@ services:
         sync: false
       - key: LABELER_CURSOR_FILEPATH
         value: /var/data/cursor.txt
-    buildCommand: pnpm i --frozen-lockfile
-    startCommand: pnpm run start
+    buildCommand: bun i --frozen-lockfile
+    startCommand: bun run start
     healthCheckPath: /health
     disk:
       name: local-files # Required field

@@ -75,12 +75,12 @@ This packages uses [Bun](https://bun.sh/) and [Effect](https://effect.website/).
 
 First install dependencies:
 ```sh
-pnpm i
+bun i
 ```
 
 Then start the development server:
 ```sh
-pnpm dev
+bun dev
 ```
 
 ## TODO
@@ -98,7 +98,7 @@ pnpm dev
 When run using Bun, you don't need to build this package. Just run the source code directly using Bun.
 
 ```sh
-pnpm dev
+bun dev
 ```
 
 ### Testing
@@ -106,5 +106,5 @@ pnpm dev
 To test the package:
 
 ```sh
-pnpm test
+bun test
 ```
