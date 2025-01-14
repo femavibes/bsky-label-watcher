@@ -5,9 +5,6 @@ settings:
   excludeLinksFromLockfile: false
 
 patchedDependencies:
-  '@changesets/get-github-info@0.6.0':
-    hash: 4nwpuevfciovsbhi25hd4g5r7y
-    path: patches/@changesets__get-github-info@0.6.0.patch
   babel-plugin-annotate-pure-calls@0.4.0:
     hash: lz2aochwly4t7pzapzh4fqay4m
     path: patches/babel-plugin-annotate-pure-calls@0.4.0.patch
@@ -2991,7 +2988,7 @@ snapshots:
 
   '@changesets/changelog-github@0.5.0':
     dependencies:
-      '@changesets/get-github-info': 0.6.0(patch_hash=4nwpuevfciovsbhi25hd4g5r7y)
+      '@changesets/get-github-info': 0.6.0
       '@changesets/types': 6.0.0
       dotenv: 8.6.0
     transitivePeerDependencies:
@@ -3049,7 +3046,7 @@ snapshots:
       picocolors: 1.1.1
       semver: 7.6.3
 
-  '@changesets/get-github-info@0.6.0(patch_hash=4nwpuevfciovsbhi25hd4g5r7y)':
+  '@changesets/get-github-info@0.6.0':
     dependencies:
       dataloader: 1.4.0
       node-fetch: 2.7.0
