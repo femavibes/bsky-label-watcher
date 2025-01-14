@@ -2,7 +2,10 @@ import { PlatformLogger } from "@effect/platform"
 import { BunFileSystem } from "@effect/platform-bun"
 import { Config, Effect, Layer, Logger, LogLevel } from "effect"
 
-const fileLogger = Logger.logfmtLogger.pipe(PlatformLogger.toFile("log.txt"))
+const fileLogger = Effect.gen(function*() {
+  const path = yield* Config.string("LOG_FILEPATH")
+  return yield* Logger.logfmtLogger.pipe(PlatformLogger.toFile(path))
+})
 
 const LogLevelLive = Config.logLevel("LOG_LEVEL").pipe(
   Config.withDefault(LogLevel.Info),
