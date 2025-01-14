@@ -1,5 +1,5 @@
 {
-  "name": "@kristojorg/bsky-labeler-watcher",
+  "name": "@kristojorg/bsky-label-watcher",
   "author": "Kristo Jorgenson <@kristojorg>",
   "version": "0.0.0",
   "type": "module",
@@ -10,7 +10,7 @@
   "module": "src/index.ts",
   "repository": {
     "type": "git",
-    "url": "https://github.com/kristojorg/bsky-labeler-watcher"
+    "url": "https://github.com/kristojorg/bsky-label-watcher"
   },
   "scripts": {
     "dev": "bun --watch src/main.ts",

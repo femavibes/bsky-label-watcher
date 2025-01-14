@@ -3,7 +3,7 @@
   "changelog": [
     "@changesets/changelog-github",
     {
-      "repo": "https://github.com/kristojorg/bsky-labeler-directory"
+      "repo": "https://github.com/kristojorg/bsky-label-watcher"
     }
   ],
   "commit": false,
