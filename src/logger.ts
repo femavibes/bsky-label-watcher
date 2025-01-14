@@ -4,12 +4,6 @@ import { Config, Effect, Layer, Logger, LogLevel } from "effect"
 
 const fileLogger = Logger.logfmtLogger.pipe(PlatformLogger.toFile("log.txt"))
 
-// Combine the pretty logger for console output with the file logger
-const combinedLogger = Effect.map(
-  fileLogger,
-  (fileLogger) => Logger.zip(Logger.prettyLoggerDefault, fileLogger),
-)
-
 const LogLevelLive = Config.logLevel("LOG_LEVEL").pipe(
   Config.withDefault(LogLevel.Info),
   Effect.andThen((level) =>
@@ -24,7 +18,7 @@ const LogLevelLive = Config.logLevel("LOG_LEVEL").pipe(
  */
 export const LoggerLive = Logger.replaceScoped(
   Logger.defaultLogger,
-  combinedLogger,
+  fileLogger,
 ).pipe(Layer.provide(BunFileSystem.layer), Layer.provide(LogLevelLive))
 
 export const LoggerDev = Logger.pretty

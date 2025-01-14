@@ -1,13 +1,11 @@
-import { Api } from "@/HttpApi"
+import { ApiLive } from "@/HttpApi"
 import { LabelWatcher } from "@/LabelWatcher"
-import { AppRuntime } from "@/Runtime"
-import { Effect } from "effect"
+import { LoggerLive } from "@/logger"
+import { Layer } from "effect"
 import "dotenv/config"
+import { BunRuntime } from "@effect/platform-bun"
 
 /**
- * TODO
- *   - Why is cursor instantiated twice?
- *
  * v1:
  *  - Subscribes to websocket with cursor
  *  - Retries the socket on failure
@@ -29,14 +27,11 @@ import "dotenv/config"
  *  - Export it as a package and allow passing in custom label map.
  */
 
-const main = Effect.gen(function*() {
-  yield* Effect.log("Starting Label Watcher...")
-  const { run } = yield* LabelWatcher
-  yield* run.pipe(Effect.fork)
+export const MainLiveLayer = Layer.mergeAll(
+  LabelWatcher.Default,
+  ApiLive,
+).pipe(
+  Layer.provide(LoggerLive),
+)
 
-  const { runApi } = yield* Api
-  // start the http server
-  yield* runApi
-})
-
-AppRuntime.runPromise(main)
+Layer.launch(MainLiveLayer).pipe(BunRuntime.runMain)
