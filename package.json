@@ -3,6 +3,7 @@
   "author": "Kristo Jorgenson <@kristojorg>",
   "version": "0.0.0",
   "type": "module",
+  "private": true,
   "packageManager": "pnpm@9.10.0",
   "license": "MIT",
   "description": "A servive for making Bluesky lists from a labeler service's labels.",
@@ -10,10 +11,6 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/kristojorg/bsky-labeler-watcher"
-  },
-  "publishConfig": {
-    "access": "public",
-    "directory": "dist"
   },
   "scripts": {
     "dev": "bun --watch src/main.ts",
