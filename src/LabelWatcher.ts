@@ -43,7 +43,7 @@ const run = Effect.gen(function*() {
 
 const LabelWatcherDeps = Layer.mergeAll(
   RetryingSocket.Default,
-  AtpAgent.Logging,
+  AtpAgent.Default,
   Cursor.Default,
   Env.Default,
 )
