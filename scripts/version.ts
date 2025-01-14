@@ -1,6 +1,6 @@
-import { $ } from "bun"
+import { $, semver } from "bun"
 import { fail } from "node:assert"
-import { inc, type ReleaseType, valid as isValidVersion } from "semver"
+import { inc, type ReleaseType } from "semver"
 
 const path = "./package.json"
 const variants: Array<ReleaseType> = [
@@ -15,6 +15,9 @@ const variants: Array<ReleaseType> = [
 
 const isValidTarget = (subject: string): subject is ReleaseType =>
   (variants as Array<string>).includes(subject)
+
+const isValidVersion = (subject: string | undefined) =>
+  semver.satisfies(subject ?? "invalid", "*")
 
 const isDirty = async () => (await $`git status --porcelain`.quiet()).text()
 

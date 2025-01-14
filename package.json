@@ -28,7 +28,8 @@
     "@effect/platform": "^0.72.2",
     "@effect/platform-bun": "^0.52.2",
     "dotenv": "^16.4.7",
-    "effect": "^3.12.2"
+    "effect": "^3.12.2",
+    "semver": "^7.6.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.24.8",
