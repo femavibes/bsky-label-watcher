@@ -1,7 +1,7 @@
 {
   "name": "@kristojorg/bsky-label-watcher",
   "author": "Kristo Jorgenson <@kristojorg>",
-  "version": "0.1.1",
+  "version": "0.1.0",
   "type": "module",
   "private": true,
   "license": "MIT",
@@ -19,7 +19,8 @@
     "lint": "eslint \"**/{src,test,examples,scripts,dtslint}/**/*.{ts,mjs}\"",
     "lint-fix": "bun lint --fix",
     "test": "vitest",
-    "coverage": "vitest --coverage"
+    "coverage": "vitest --coverage",
+    "version": "bun scripts/version.ts"
   },
   "dependencies": {
     "@atcute/cbor": "^2.1.1",
