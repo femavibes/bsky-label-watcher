@@ -45,7 +45,6 @@ const LabelWatcherDeps = Layer.mergeAll(
   RetryingSocket.Default,
   AtpAgent.Default,
   Cursor.Default,
-  Env.Default,
 )
 
 export const LabelWatcherLive = Layer.scopedDiscard(run).pipe(

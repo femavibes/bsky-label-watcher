@@ -4,6 +4,7 @@ import { LoggerLive } from "@/logger"
 import { Layer } from "effect"
 import "dotenv/config"
 import { BunRuntime } from "@effect/platform-bun"
+import { Env } from "@/Environment"
 
 /**
  * v1:
@@ -28,7 +29,7 @@ import { BunRuntime } from "@effect/platform-bun"
  */
 
 export const MainLiveLayer = Layer.mergeAll(
-  LabelWatcherLive,
+  LabelWatcherLive.pipe(Layer.provide(Env.Default)),
   ApiLive,
 ).pipe(
   Layer.provide(LoggerLive),
