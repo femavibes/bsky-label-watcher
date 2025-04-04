@@ -3,10 +3,29 @@
   "author": "Kristo Jorgenson <@kristojorg>",
   "version": "0.1.1",
   "type": "module",
-  "private": true,
+  "private": false,
   "license": "MIT",
-  "description": "A servive for making Bluesky lists from a labeler service's labels.",
-  "module": "src/index.ts",
+  "description": "A service for making Bluesky lists from a labeler service's labels.",
+  "main": "build/esm/index.js",
+  "module": "build/esm/index.js",
+  "types": "build/dts/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./build/dts/index.d.ts",
+      "import": "./build/esm/index.js",
+      "default": "./build/esm/index.js"
+    }
+  },
+  "files": [
+    "build",
+    "src",
+    "tsconfig.build.json",
+    "tsconfig.json",
+    "package.json",
+    "README.md",
+    "render.yaml",
+    ".env"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/kristojorg/bsky-label-watcher"
@@ -20,7 +39,10 @@
     "lint-fix": "bun lint --fix",
     "test": "vitest",
     "coverage": "vitest --coverage",
-    "version": "bun scripts/version.ts"
+    "version": "bun scripts/version.ts",
+    "build": "tsc -b tsconfig.build.json",
+    "clean": "rm -rf build",
+    "prepublishOnly": "bun run clean && bun run build"
   },
   "dependencies": {
     "@atcute/cbor": "^2.1.1",
