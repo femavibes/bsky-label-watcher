@@ -1,10 +1,14 @@
 {
-  "extends": "./tsconfig.src.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "types": ["node"],
     "tsBuildInfoFile": ".tsbuildinfo/build.tsbuildinfo",
-    "outDir": "build/esm",
-    "declarationDir": "build/dts",
-    "stripInternal": true
-  }
+    "outDir": "build",
+    "declarationDir": "build",
+    "stripInternal": true,
+    "rootDir": "src",
+    "allowImportingTsExtensions": false,
+    "noEmit": false
+  },
+  "include": ["src"]
 }
