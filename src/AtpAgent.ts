@@ -22,15 +22,27 @@ const makeLogging = Effect.gen(function* () {
       Effect.log(`Removing ${did} from ${label}`),
   };
 });
-export class AtpLabelerAgent extends Effect.Service<AtpLabelerAgent>()(
-  "@labelwatcher/AtpLabelerAgent",
+export class LabelerInfo extends Effect.Service<LabelerInfo>()(
+  "@labelwatcher/LabelerInfo",
   {
     effect: Effect.gen(function* () {
       const service = yield* Config.url("BSKY_SERVICE");
       const did = yield* Schema.Config("LABELER_DID", Did);
       const password = yield* Config.string("LABELER_APP_PASSWORD");
 
-      return yield* make({ service, did, password });
+      const agent = yield* make({ service, did, password });
+
+      const serviceDoc = yield* Effect.tryPromise({
+        try: () =>
+          agent.app.bsky.labeler.getServices({
+            dids: [did],
+            detailed: true,
+          }),
+        catch: (cause) =>
+          new AtpError({ message: "Failed to get labeler info", cause }),
+      });
+
+      return { view: serviceDoc.data.views[0], did };
     }),
   }
 ) {}
@@ -38,18 +50,24 @@ export class AtpLabelerAgent extends Effect.Service<AtpLabelerAgent>()(
 export class AtpListAccountAgent extends Effect.Service<AtpListAccountAgent>()(
   "@labelwatcher/AtpListAccountAgent",
   {
-    dependencies: [ListService.Default, Env.Default, AtpLabelerAgent.Default],
+    dependencies: [ListService.Default, Env.Default, LabelerInfo.Default],
     effect: Effect.gen(function* () {
       const service = yield* Config.url("BSKY_SERVICE");
-      const did = yield* Schema.Config("LIST_ACCOUNT_DID", Did);
-      const password = yield* Config.string("LIST_ACCOUNT_APP_PASSWORD");
+      const labelerDid = yield* Schema.Config("LABELER_DID", Did);
+      const labelerPassword = yield* Config.string("LABELER_APP_PASSWORD");
+      const did = yield* Schema.Config("LIST_ACCOUNT_DID", Did).pipe(
+        Config.withDefault(labelerDid)
+      );
+      const password = yield* Config.string("LIST_ACCOUNT_APP_PASSWORD").pipe(
+        Config.withDefault(labelerPassword)
+      );
 
       const agent = yield* make({ service, did, password });
       const env = yield* Env;
       const { get, set } = yield* ListService;
 
-      const labelerAgent = yield* AtpLabelerAgent;
-      yield* setupLists(agent, labelerAgent, env, set);
+      const labelerInfo = yield* LabelerInfo;
+      yield* setupLists(agent, labelerInfo, env, set);
 
       return {
         addUserToList: addUserToList(agent, env, get),
@@ -96,7 +114,7 @@ export const make = (options: { service: URL; did: Did; password: string }) =>
 
 const setupLists = (
   listAccountAgent: Agent,
-  labelerAgent: Agent,
+  labelerInfo: LabelerInfo,
   env: Env,
   setList: (label: Label, uri: AtUriSchemaType) => Effect.Effect<void>
 ) =>
@@ -104,24 +122,8 @@ const setupLists = (
     const { labelsToList } = env;
     yield* Effect.logDebug(`Setting up lists for ${labelsToList}`);
 
-    const labelerDid = labelerAgent.did;
-    if (!labelerDid) {
-      return yield* new AtpError({
-        message: "Labeler did is not set",
-      });
-    }
-
-    const service = yield* Effect.tryPromise({
-      try: () =>
-        labelerAgent.app.bsky.labeler.getServices({
-          dids: [labelerDid],
-          detailed: true,
-        }),
-      catch: (cause) =>
-        new AtpError({ message: "Failed to get labeler info", cause }),
-    });
-
-    const view = service.data.views[0];
+    const labelerDid = labelerInfo.did;
+    const view = labelerInfo.view;
     if (!isLabelerViewDetailed(view) || !view.policies.labelValueDefinitions) {
       return yield* new AtpError({
         message: `Labeler definition is either missing a view or missing "labelValuesDefinitions". Check the output of: https://public.api.bsky.app/xrpc/app.bsky.labeler.getServices?dids=${labelerDid}&detailed=true`,
@@ -158,6 +160,7 @@ const setupLists = (
       }
       // create a list if there is none
       const record: AppBskyGraphList.Record = {
+        $type: "app.bsky.graph.list",
         purpose: "app.bsky.graph.defs#curatelist",
         name,
         description,
