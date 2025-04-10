@@ -122,6 +122,9 @@ const setupLists = (
     const { labelsToList } = env;
     yield* Effect.logDebug(`Setting up lists for ${labelsToList}`);
 
+    yield* Effect.log("LIST ACCOUNT", listAccountAgent.did);
+
+    const listAccountDid = listAccountAgent.assertDid;
     const labelerDid = labelerInfo.did;
     const view = labelerInfo.view;
     if (!isLabelerViewDetailed(view) || !view.policies.labelValueDefinitions) {
@@ -136,7 +139,7 @@ const setupLists = (
     const lists = yield* Effect.tryPromise({
       try: () =>
         listAccountAgent.app.bsky.graph.getLists({
-          actor: labelerDid,
+          actor: listAccountDid,
           limit: 100,
         }),
       catch: (cause) => new AtpError({ message: "Failed to get lists", cause }),
@@ -169,7 +172,7 @@ const setupLists = (
       const result = yield* Effect.tryPromise(() =>
         listAccountAgent.app.bsky.graph.list.create(
           {
-            repo: labelerDid,
+            repo: listAccountDid,
           },
           record
         )
