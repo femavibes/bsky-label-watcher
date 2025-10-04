@@ -28,11 +28,16 @@ import { Env } from "@/Environment"
  *  - Export it as a package and allow passing in custom label map.
  */
 
+import { startSimpleServer } from "@/SimpleServer"
+
 export const MainLiveLayer = Layer.mergeAll(
   LabelWatcherLive.pipe(Layer.provide(Env.Default)),
   ApiLive,
 ).pipe(
   Layer.provide(LoggerLive),
 )
+
+// Start simple admin server on port 3501
+startSimpleServer()
 
 Layer.launch(MainLiveLayer).pipe(BunRuntime.runMain)
