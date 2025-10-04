@@ -131,7 +131,6 @@ const AdminLive = HttpApiBuilder.group(ServerApi, "Admin", (handlers) => {
 // Provide the implementation for the API
 const ServerApiLive = HttpApiBuilder.api(ServerApi).pipe(
   Layer.provide(Layer.merge(HealthLive, AdminLive)),
-  Layer.provide(AtpListAccountAgent.Default),
 )
 
 // Set up the server using BunHttpServer on port 3500
