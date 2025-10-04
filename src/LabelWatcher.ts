@@ -1,6 +1,7 @@
 import { AtpListAccountAgent } from "@/AtpAgent";
 import { Env } from "@/Environment";
 import { decodeFirst } from "@atcute/cbor";
+import { AtUri } from "@atproto/api";
 import { Data, Effect, Layer, Schema, Stream } from "effect";
 import { Cursor } from "./Cursor";
 import { RetryingSocket } from "./RetryingSocket";
@@ -18,10 +19,16 @@ const run = Effect.gen(function* () {
   const cursor = yield* Cursor;
   const initialCursor = yield* cursor.get;
   const { labelerSocketUrl } = yield* Env;
-  labelerSocketUrl.searchParams.set("cursor", initialCursor.toString());
 
-  const stream = connect({ url: labelerSocketUrl });
+  // Manually construct the URL to ensure correctness and avoid parsing issues.
+  // 1. Get the base URL string.
+  let urlString = labelerSocketUrl.toString();
+  // 2. Remove any existing cursor parameter.
+  urlString = urlString.split("?")[0];
+  // 3. Append the correct cursor.
+  const finalUrl = `${urlString}?cursor=${initialCursor}`;
 
+  const stream = connect({ url: finalUrl });
   const runStream = stream.pipe(
     Stream.mapEffect(parseMessage),
     Stream.catchAll(handleMessageError),
@@ -61,12 +68,27 @@ export const LabelWatcherLive = Layer.scopedDiscard(run).pipe(
 const handleLabel = (agent: AtpListAccountAgent) => (label: MessageLabels) =>
   Effect.gen(function* () {
     const labels = label.body.labels;
-    for (const label of labels) {
-      if (label.neg) {
-        yield* agent.removeUserFromList(label.uri, label.val);
+    for (const l of labels) {
+      let subjectDid: string;
+      let listLabel: string;
+
+      // If the URI is an at:// URI, parse it to get the author's DID.
+      // Otherwise, assume it's already a DID string.
+      if (l.uri.startsWith("at://")) {
+        subjectDid = new AtUri(l.uri).hostname;
+        listLabel = `${l.val}-comments`;
+      } else {
+        subjectDid = l.uri;
+        listLabel = l.val;
+      }
+
+      if (l.neg) {
+        yield* agent.removeUserFromList(subjectDid, l.val);
+        yield* agent.removeUserFromList(subjectDid, listLabel);
         continue;
       }
-      yield* agent.addUserToList(label.uri, label.val);
+      yield* agent.addUserToList(subjectDid, l.val);
+      yield* agent.addUserToList(subjectDid, listLabel);
     }
     return label.body.seq;
   });

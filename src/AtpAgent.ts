@@ -1,19 +1,20 @@
 import { Env } from "@/Environment";
 import { ListService } from "@/ListService";
+import { Metrics } from "@/Metrics";
 import { AtUriSchema, Did, type AtUriSchemaType, type Label } from "@/schema";
 import { Agent, type AppBskyGraphList } from "@atproto/api";
 import { AtUri, CredentialSession } from "@atproto/api";
 import { isLabelerViewDetailed } from "@atproto/api/dist/client/types/app/bsky/labeler/defs";
 import type { SessionManager } from "@atproto/api/dist/session-manager";
-import { Config, Data, Effect, Layer, Option, Schema } from "effect";
+import { Config, Data, Effect, Layer, Option, Schedule, Schema } from "effect";
 
 const makeLogging = Effect.gen(function* () {
   const { labelsToList } = yield* Env;
   const { set } = yield* ListService;
 
-  for (const label of labelsToList) {
-    yield* set(label, `at://list/${label}`);
-    yield* Effect.log(`Created list ${label} for label: ${label}`);
+  for (const { label, listType } of labelsToList) {
+    yield* set(label, `at://list/${label}`, listType);
+    yield* Effect.log(`Created ${listType} list ${label} for label: ${label}`);
   }
   return {
     addUserToList: (did: Did, label: string) =>
@@ -50,7 +51,7 @@ export class LabelerInfo extends Effect.Service<LabelerInfo>()(
 export class AtpListAccountAgent extends Effect.Service<AtpListAccountAgent>()(
   "@labelwatcher/AtpListAccountAgent",
   {
-    dependencies: [ListService.Default, Env.Default, LabelerInfo.Default],
+    dependencies: [ListService.Default, Env.Default, LabelerInfo.Default, Metrics.Default],
     effect: Effect.gen(function* () {
       const service = yield* Config.url("BSKY_SERVICE");
       const labelerDid = yield* Schema.Config("LABELER_DID", Did);
@@ -65,13 +66,14 @@ export class AtpListAccountAgent extends Effect.Service<AtpListAccountAgent>()(
       const agent = yield* make({ service, did, password });
       const env = yield* Env;
       const { get, set } = yield* ListService;
+      const metrics = yield* Metrics;
 
       const labelerInfo = yield* LabelerInfo;
       yield* setupLists(agent, labelerInfo, env, set);
 
       return {
-        addUserToList: addUserToList(agent, env, get),
-        removeUserFromList: removeUserFromList(agent, env, get),
+        addUserToList: addUserToList(agent, env, get, metrics),
+        removeUserFromList: removeUserFromList(agent, env, get, metrics),
       };
     }),
   }
@@ -83,7 +85,7 @@ export class AtpListAccountAgent extends Effect.Service<AtpListAccountAgent>()(
         (v) => ({ ...v, _tag: "@labelwatcher/AtpListAccountAgent" } as const)
       )
     )
-  ).pipe(Layer.provide(Layer.merge(ListService.Default, Env.Default)));
+  ).pipe(Layer.provide(Layer.mergeAll(ListService.Default, Env.Default, Metrics.Default)));
 }
 
 export class AtpError extends Data.TaggedError("AtpError")<{
@@ -116,7 +118,7 @@ const setupLists = (
   listAccountAgent: Agent,
   labelerInfo: LabelerInfo,
   env: Env,
-  setList: (label: Label, uri: AtUriSchemaType) => Effect.Effect<void>
+  setList: (label: Label, uri: AtUriSchemaType, listType: "curate" | "mod") => Effect.Effect<void>
 ) =>
   Effect.gen(function* () {
     const { labelsToList } = env;
@@ -145,7 +147,7 @@ const setupLists = (
       catch: (cause) => new AtpError({ message: "Failed to get lists", cause }),
     }).pipe(Effect.map((r) => r.data.lists));
 
-    for (const label of labelsToList) {
+    for (const { label, listType } of labelsToList) {
       const def = labelDefs.find((d) => d.identifier === label);
       if (!def) {
         yield* Effect.logWarning(
@@ -157,14 +159,17 @@ const setupLists = (
       const existingList = lists.find((l) => l.name === name);
       if (existingList) {
         const uri = Schema.decodeUnknownSync(AtUriSchema)(existingList.uri);
-        yield* setList(label, uri);
-        yield* Effect.log(`Existing list linked for label: ${label}`);
+        yield* setList(label, uri, listType);
+        yield* Effect.log(`Existing ${listType} list linked for label: ${label}`);
         continue;
       }
       // create a list if there is none
+      const purpose = listType === "mod" 
+        ? "app.bsky.graph.defs#modlist" 
+        : "app.bsky.graph.defs#curatelist";
       const record: AppBskyGraphList.Record = {
         $type: "app.bsky.graph.list",
-        purpose: "app.bsky.graph.defs#curatelist",
+        purpose,
         name,
         description,
         createdAt: new Date().toISOString(),
@@ -189,8 +194,8 @@ const setupLists = (
         continue;
       }
       // add the list to our listmap
-      yield* setList(label, uri.value);
-      yield* Effect.log(`Created list ${name} for label: ${label}`);
+      yield* setList(label, uri.value, listType);
+      yield* Effect.log(`Created ${listType} list ${name} for label: ${label}`);
     }
   }).pipe(Effect.asVoid);
 
@@ -198,7 +203,8 @@ const removeUserFromList =
   (
     agent: Agent,
     env: Env,
-    getList: (label: Label) => Effect.Effect<AtUriSchemaType | undefined>
+    getList: (label: Label) => Effect.Effect<AtUriSchemaType | undefined>,
+    metrics: Metrics
   ) =>
   (did: Did, label: Label) =>
     Effect.gen(function* () {
@@ -216,20 +222,15 @@ const removeUserFromList =
 
       yield* Effect.logDebug(`Removing user ${did} from list ${label}`);
 
-      // get the list first so we can get the membershipUri
-      const list = yield* Effect.tryPromise({
-        try: () => agent.app.bsky.graph.getList({ list: listUri }),
-        catch: (cause) =>
-          new AtpError({ message: "Failed to get list", cause }),
-      });
-      const membership = list.data.items.find((i) => i.subject.did === did);
+      // find the user in the list to get the membershipUri
+      const membership = yield* findUserInList(agent, listUri, did);
       if (!membership) {
         yield* Effect.log(`User ${did} not found in list: ${label}`);
         return;
       }
       const membershipUri = new AtUri(membership.uri);
 
-      yield* Effect.tryPromise({
+      const removeOperation = Effect.tryPromise({
         try: () =>
           agent.app.bsky.graph.listitem.delete({
             repo: listAccountDid,
@@ -238,16 +239,26 @@ const removeUserFromList =
         catch: (cause) =>
           new AtpError({ message: "Failed to remove user from list", cause }),
       });
-      yield* Effect.log(`Removed user ${did} from list ${label}`);
-    }).pipe(
-      Effect.catchAll(logOrWarn(`Failed to remove ${did} from list ${label}`))
-    );
+
+      yield* removeOperation.pipe(
+        Effect.retry(Schedule.exponential("1 seconds").pipe(Schedule.compose(Schedule.recurs(2)))),
+        Effect.tap(() => metrics.recordUserRemoved(label)),
+        Effect.tap(() => Effect.log(`Removed user ${did} from list ${label}`)),
+        Effect.catchAll((error) => 
+          Effect.gen(function* () {
+            yield* metrics.recordRemoveFailure(label);
+            yield* Effect.logError(`Failed to remove ${did} from list ${label} after retries:`, error);
+          })
+        )
+      );
+    });
 
 const addUserToList =
   (
     agent: Agent,
     env: Env,
-    getList: (label: Label) => Effect.Effect<AtUriSchemaType | undefined>
+    getList: (label: Label) => Effect.Effect<AtUriSchemaType | undefined>,
+    metrics: Metrics
   ) =>
   (userToAdd: Did, label: Label) =>
     Effect.gen(function* () {
@@ -265,7 +276,14 @@ const addUserToList =
         return;
       }
 
-      yield* Effect.tryPromise({
+      // Check if user is already in the list
+      const existingMembership = yield* findUserInList(agent, listUri, userToAdd);
+      if (existingMembership) {
+        yield* Effect.logDebug(`User ${userToAdd} already in list ${label}, skipping`);
+        return;
+      }
+
+      const addOperation = Effect.tryPromise({
         try: () =>
           agent.app.bsky.graph.listitem.create(
             { repo: listAccountDid },
@@ -278,10 +296,45 @@ const addUserToList =
         catch: (cause) =>
           new AtpError({ message: "Failed to add user to list", cause }),
       });
-      yield* Effect.log(`Added user ${userToAdd} to list ${label}`);
-    }).pipe(
-      Effect.catchAll(logOrWarn(`Failed to add ${userToAdd} to list ${label}`))
-    );
+
+      yield* addOperation.pipe(
+        Effect.retry(Schedule.exponential("1 seconds").pipe(Schedule.compose(Schedule.recurs(2)))),
+        Effect.tap(() => metrics.recordUserAdded(label)),
+        Effect.tap(() => Effect.log(`Added user ${userToAdd} to list ${label}`)),
+        Effect.catchAll((error) => 
+          Effect.gen(function* () {
+            yield* metrics.recordAddFailure(label);
+            yield* Effect.logError(`Failed to add ${userToAdd} to list ${label} after retries:`, error);
+          })
+        )
+      );
+    });
+
+const findUserInList = (agent: Agent, listUri: AtUriSchemaType, userDid: Did) =>
+  Effect.gen(function* () {
+    let cursor: string | undefined;
+    
+    do {
+      const response = yield* Effect.tryPromise({
+        try: () => agent.app.bsky.graph.getList({ 
+          list: listUri, 
+          limit: 100,
+          cursor 
+        }),
+        catch: (cause) =>
+          new AtpError({ message: "Failed to get list", cause }),
+      });
+      
+      const foundUser = response.data.items.find((i) => i.subject.did === userDid);
+      if (foundUser) {
+        return foundUser;
+      }
+      
+      cursor = response.data.cursor;
+    } while (cursor);
+    
+    return undefined;
+  });
 
 const logOrWarn = (message: string) => (e: unknown) =>
   Effect.gen(function* () {

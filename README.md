@@ -30,8 +30,9 @@ BSKY_SERVICE="https://bsky.social"
 
 ############################   Labeler Info   #########################
 # this is the endpoint used by the Bluesky relay to subscribe to labels.
-# start the cursor at 0 to get all labels ever applied
-LABELER_SOCKET_URL=wss://<labeler-domain>/xrpc/com.atproto.label.subscribeLabels?cursor=0
+# The service will automatically append the correct cursor.
+# Do NOT include `?cursor=` in this URL.
+LABELER_SOCKET_URL=wss://<labeler-domain>/xrpc/com.atproto.label.subscribeLabels
 LABELER_DID=
 # should be an App Password
 LABELER_APP_PASSWORD=
@@ -56,7 +57,7 @@ The package is available on Docker Hub at [kristojorgenson/bsky-label-watcher](h
 
 ```sh
 docker run \
- --pull
+ --pull \
  -v $(pwd)/data:/var/data \
  --env-file .env.local \
  -e CURSOR_FILEPATH=/var/data/cursor.txt \

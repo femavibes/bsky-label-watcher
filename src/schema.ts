@@ -88,8 +88,9 @@ const LabelBody = Schema.Struct({
   src: Did.annotations({
     description: "The did of the labeler",
   }),
-  uri: Did.annotations({
-    description: "The did of the subject",
+  uri: Schema.Union(Did, AtUriSchema).annotations({
+    description:
+      "The DID of the subject (for account labels) or the AT-URI of the content (for record labels)",
   }),
   neg: Schema.optional(Schema.Boolean).annotations({
     description: "Indicates if the label is being removed",

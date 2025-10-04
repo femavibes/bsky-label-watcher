@@ -9,11 +9,19 @@ export class Env extends Effect.Service<Env>()("Env", {
     const labelerCursorFilepath = yield* Config.nonEmptyString(
       "LABELER_CURSOR_FILEPATH"
     ).pipe(Config.withDefault("cursor.txt"));
-    // reverse the list because bluesky orders them based on latest creation
-    const labelsToList = yield* Config.array(
+    // Parse labels with optional list types (format: "label" or "label:curate" or "label:mod")
+    const labelsToListRaw = yield* Config.array(
       Config.string(),
       "LABELS_TO_LIST"
-    ).pipe(Effect.map((v) => v.reverse().map((l) => Label.make(l))));
+    );
+    
+    const labelsToList = labelsToListRaw.reverse().map((entry) => {
+      const [labelId, listType = "curate"] = entry.split(":");
+      return {
+        label: Label.make(labelId),
+        listType: listType as "curate" | "mod"
+      };
+    });
 
     return {
       labelerSocketUrl,
