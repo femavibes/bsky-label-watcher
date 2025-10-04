@@ -9,6 +9,7 @@ import {
   HttpApiGroup,
   HttpServer,
   HttpServerRequest,
+  HttpServerResponse,
 } from "@effect/platform"
 import { BunHttpServer } from "@effect/platform-bun"
 import { Effect, Layer, Schema, Config } from "effect"
@@ -66,7 +67,8 @@ const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
     .handle("health", () => Effect.succeed("Looks ok."))
     .handle("cursor", () => Cursor.get)
     .handle("metrics", () => Metrics.getMetrics)
-    .handle("admin", () => Effect.succeed(`<!DOCTYPE html>
+    .handle("admin", () => 
+      HttpServerResponse.html(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
