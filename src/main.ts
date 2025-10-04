@@ -32,12 +32,9 @@ import { startSimpleServer } from "@/SimpleServer"
 
 export const MainLiveLayer = Layer.mergeAll(
   LabelWatcherLive.pipe(Layer.provide(Env.Default)),
-  // ApiLive, // Disabled - using simple server instead
+  ApiLive, // Re-enabled for admin endpoints
 ).pipe(
   Layer.provide(LoggerLive),
 )
-
-// Start simple admin server on port 3500
-startSimpleServer()
 
 Layer.launch(MainLiveLayer).pipe(BunRuntime.runMain)
