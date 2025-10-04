@@ -28,11 +28,9 @@ import { Env } from "@/Environment"
  *  - Export it as a package and allow passing in custom label map.
  */
 
-import { startSimpleServer } from "@/SimpleServer"
-
 export const MainLiveLayer = Layer.mergeAll(
   LabelWatcherLive.pipe(Layer.provide(Env.Default)),
-  ApiLive, // Re-enabled for admin endpoints
+  ApiLive,
 ).pipe(
   Layer.provide(LoggerLive),
 )

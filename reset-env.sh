@@ -1,3 +1,7 @@
+#!/bin/bash
+# Script to reset .env file to placeholder values before git commit
+
+cat > .env << 'EOF'
 ############################      Bluesky     #########################
 BSKY_SERVICE="https://bsky.social"
 
@@ -29,3 +33,6 @@ ADMIN_API_KEY=admin123
 # Examples: "spam:mod,quality-content:curate,news" (news defaults to curate)
 # The first label will appear at the top of the Bluesky Lists page.
 LABELS_TO_LIST=label-identifier-a:curate,label-identifier-b:mod,label-identifier-c
+EOF
+
+echo ".env file has been reset to placeholder values"

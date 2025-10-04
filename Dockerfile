@@ -15,7 +15,7 @@ RUN cd /temp/prod && bun install --frozen-lockfile --production
 FROM base AS release
 COPY . .
 COPY --from=prod-deps /temp/prod/node_modules node_modules
-COPY admin.html admin.html
+
 # All data (logs and cursor) need to be placed under /var/data
 RUN mkdir -p /var/data/ && chown bun:bun /var/data/
 

@@ -1,6 +1,6 @@
 services:
   label-watcher:
-    image: ghcr.io/femavibes/bsky-label-watcher:latest
+    build: .
     ports:
       - "3550:3500"
     volumes:
@@ -9,5 +9,5 @@ services:
       - LABELER_CURSOR_FILEPATH=/var/data/cursor.txt
       - LOG_FILEPATH=/var/data/log.txt
     env_file:
-      - .env
+      - .env.local
     restart: unless-stopped
