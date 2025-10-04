@@ -31,9 +31,9 @@ const ServerApi = HttpApi.make("ServerApi").add(
   HttpApiGroup.make("Admin")
     .add(HttpApiEndpoint.get("config")`/admin/config`.addSuccess(Schema.Any))
     .add(HttpApiEndpoint.post("addLabel")`/admin/labels`.addSuccess(Schema.String))
-    .add(HttpApiEndpoint.delete("removeLabel")`/admin/labels/${Schema.String}`)
-    .add(HttpApiEndpoint.put("updateLabel")`/admin/labels/${Schema.String}`)
-    .add(HttpApiEndpoint.post("toggleLabel")`/admin/labels/${Schema.String}/toggle`)
+    .add(HttpApiEndpoint.del("removeLabel")`/admin/labels/${Schema.String}`.addSuccess(Schema.String))
+    .add(HttpApiEndpoint.put("updateLabel")`/admin/labels/${Schema.String}`.addSuccess(Schema.String))
+    .add(HttpApiEndpoint.post("toggleLabel")`/admin/labels/${Schema.String}/toggle`.addSuccess(Schema.String))
 ).addError(
   HttpApiError.NotFound,
   {
