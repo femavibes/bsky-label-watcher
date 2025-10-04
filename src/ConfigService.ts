@@ -73,20 +73,12 @@ export class ConfigService extends Effect.Service<ConfigService>()("ConfigServic
         yield* saveConfig(newConfig)
       })
     
-    const backfillLabel = (label: string) =>
-      Effect.gen(function*() {
-        yield* Effect.logInfo(`Backfill requested for label: ${label}`)
-        // Backfill logic moved to separate service to avoid circular dependency
-        return `Backfill initiated for ${label}`
-      })
-    
     return {
       loadConfig,
       addLabel,
       removeLabel,
       toggleLabel,
-      updateLabelType,
-      backfillLabel
+      updateLabelType
     }
   }),
 }) {}
