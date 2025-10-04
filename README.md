@@ -23,7 +23,7 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
     * GET /cursor  
     * GET /metrics - Track success rates, failures, and per-label statistics
 *  Writes logs to both `stdout` and `LOG_FILEPATH` (default: `log.txt`)
-*  **Runs on port 3500** by default
+*  **Runs on port 3501** by default (3500 internally)
 
 ## Configuration
 
@@ -78,7 +78,7 @@ docker compose up -d
 **That's it!** The service will:
 - Pull the latest image automatically
 - Create a `data/` directory for persistent storage
-- Run on port 3500 with auto-restart
+- Run on port 3501 with auto-restart
 
 #### Manual Docker Run
 
@@ -96,16 +96,16 @@ docker run -d \
   --env-file .env \
   -e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt \
   -e LOG_FILEPATH=/var/data/log.txt \
-  -p 3500:3500 \
+  -p 3501:3500 \
   --restart unless-stopped \
   ghcr.io/femavibes/bsky-label-watcher:latest
 ```
 
 #### Accessing the API
 Once running, you can access:
-- Health check: `http://localhost:3500/health`
-- Current cursor: `http://localhost:3500/cursor`  
-- Metrics & auditing: `http://localhost:3500/metrics`
+- Health check: `http://localhost:3501/health`
+- Current cursor: `http://localhost:3501/cursor`  
+- Metrics & auditing: `http://localhost:3501/metrics`
 
 
 ### Render

@@ -17,3 +17,5 @@ scratchpad/*
 
 log.txt
 cursor.txt
+docker-compose.local.yml
+data/

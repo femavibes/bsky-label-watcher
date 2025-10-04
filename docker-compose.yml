@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   label-watcher:
     image: ghcr.io/femavibes/bsky-label-watcher:latest
     ports:
-      - "3500:3500"
+      - "3501:3500"
     volumes:
       - ./data:/var/data
     environment:
