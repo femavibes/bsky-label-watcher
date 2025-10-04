@@ -187,4 +187,4 @@ To test the package:
 
 ```sh
 bun test
-```
+```# Docker Image Available at ghcr.io/femavibes/bsky-label-watcher
