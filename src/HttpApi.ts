@@ -68,10 +68,8 @@ const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
     .handle("health", () => Effect.succeed("Looks ok."))
     .handle("cursor", () => Cursor.get)
     .handle("metrics", () => Metrics.getMetrics)
-    .handle("admin", ({ request }) => 
-      Effect.gen(function* () {
-        // Set response headers manually
-        const response = new Response(`<!DOCTYPE html>
+    .handle("admin", () => 
+      Effect.succeed(`<!DOCTYPE html>
 <html><head><title>Admin</title><meta charset="UTF-8"></head>
 <body><h1>Label Watcher Admin</h1>
 <p>API Key: <input type="password" id="key" placeholder="admin123"></p>
@@ -88,11 +86,7 @@ function login() {
     document.getElementById('result').innerHTML = 'Error: ' + e.message;
   });
 }
-</script></body></html>`, {
-          headers: { 'Content-Type': 'text/html' }
-        })
-        return response.text()
-      })
+</script></body></html>`)
     )
 })
 
