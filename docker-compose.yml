@@ -2,7 +2,7 @@ services:
   label-watcher:
     image: ghcr.io/femavibes/bsky-label-watcher:latest
     ports:
-      - "3501:3500"
+      - "3550:3500"
     volumes:
       - ./data:/var/data
     environment:
@@ -10,4 +10,11 @@ services:
       - LOG_FILEPATH=/var/data/log.txt
     env_file:
       - .env
+    restart: unless-stopped
+  
+  admin:
+    image: ghcr.io/femavibes/bsky-label-watcher:latest
+    ports:
+      - "3551:3501"
+    command: ["bun", "admin-server.ts"]
     restart: unless-stopped
