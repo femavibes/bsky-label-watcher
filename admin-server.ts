@@ -1,5 +1,7 @@
 #!/usr/bin/env bun
 
+// Standalone admin server - no Effect dependencies
+
 const adminHTML = `<!DOCTYPE html>
 <html>
 <head>

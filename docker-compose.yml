@@ -16,5 +16,6 @@ services:
     image: ghcr.io/femavibes/bsky-label-watcher:latest
     ports:
       - "3551:3501"
-    command: ["bun", "admin-server.ts"]
+    command: ["bun", "run", "admin-server.ts"]
+    working_dir: /usr/src/app
     restart: unless-stopped
