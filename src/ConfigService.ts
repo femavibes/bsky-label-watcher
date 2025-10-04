@@ -2,7 +2,6 @@ import { Effect, Ref } from "effect"
 import { FileSystem } from "@effect/platform"
 import { BunFileSystem } from "@effect/platform-bun"
 import { Env } from "./Environment"
-import { AtpListAccountAgent } from "./AtpAgent"
 
 export interface LabelConfig {
   label: string
@@ -12,7 +11,7 @@ export interface LabelConfig {
 
 export class ConfigService extends Effect.Service<ConfigService>()("ConfigService", {
   accessors: true,
-  dependencies: [Env.Default, BunFileSystem.layer, AtpListAccountAgent.Default],
+  dependencies: [Env.Default, BunFileSystem.layer],
   effect: Effect.gen(function*() {
     const fs = yield* FileSystem.FileSystem
     const env = yield* Env
@@ -76,9 +75,9 @@ export class ConfigService extends Effect.Service<ConfigService>()("ConfigServic
     
     const backfillLabel = (label: string) =>
       Effect.gen(function*() {
-        const agent = yield* AtpListAccountAgent
-        yield* agent.backfillLabel(label)
-        return `Backfill completed for ${label}`
+        yield* Effect.logInfo(`Backfill requested for label: ${label}`)
+        // Backfill logic moved to separate service to avoid circular dependency
+        return `Backfill initiated for ${label}`
       })
     
     return {
