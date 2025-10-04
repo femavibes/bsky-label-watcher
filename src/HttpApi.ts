@@ -25,7 +25,7 @@ const ServerApi = HttpApi.make("ServerApi").add(
     )
     .add(HttpApiEndpoint.get("cursor")`/cursor`.addSuccess(Schema.Number))
     .add(HttpApiEndpoint.get("metrics")`/metrics`.addSuccess(Schema.Any))
-    .add(HttpApiEndpoint.get("admin")`/admin`.addSuccess(Schema.String))
+
     .add(
       HttpApiEndpoint.get("not-found", "*").addSuccess(Schema.String),
     )
@@ -68,26 +68,7 @@ const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
     .handle("health", () => Effect.succeed("Looks ok."))
     .handle("cursor", () => Cursor.get)
     .handle("metrics", () => Metrics.getMetrics)
-    .handle("admin", () => 
-      Effect.succeed(`<!DOCTYPE html>
-<html><head><title>Admin</title><meta charset="UTF-8"></head>
-<body><h1>Label Watcher Admin</h1>
-<p>API Key: <input type="password" id="key" placeholder="admin123"></p>
-<button onclick="login()">Login</button>
-<div id="result"></div>
-<script>
-function login() {
-  const key = document.getElementById('key').value;
-  fetch('/admin/config', {
-    headers: { 'Authorization': 'Bearer ' + key }
-  }).then(r => r.json()).then(data => {
-    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-  }).catch(e => {
-    document.getElementById('result').innerHTML = 'Error: ' + e.message;
-  });
-}
-</script></body></html>`)
-    )
+
 })
 
 const AdminLive = HttpApiBuilder.group(ServerApi, "Admin", (handlers) => {
@@ -145,6 +126,7 @@ export const ApiLive = HttpApiBuilder.serve().pipe(
   Layer.provide(ServerApiLive),
   HttpServer.withLogAddress,
 
+  HttpServer.serveStatic({ path: "/admin.html", file: "admin.html" }),
   Layer.provide(BunHttpServer.layer({ port: 3500 })),
   Layer.provide(Layer.mergeAll(Cursor.Default, Metrics.Default, ConfigService.Default, BunFileSystem.layer)),
 )
