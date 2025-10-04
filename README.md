@@ -6,19 +6,24 @@ A Typescript service for creating lists based on a Bluesky labeler's labels. The
 
 ## Features
 
+*  **Supports both regular and moderation lists** - Configure per-label whether to create curate lists or mod lists
 *  Sets up lists on your labelers account based on your label's display name and description.
     * Initializes lists with the same name and description as the label in your labelers service record.
 *  Subscribes to your labeler's websocket
     *  Allows starting from `cursor=0` to get all existing labels
+*  **Retry logic with exponential backoff** - Automatically retries failed operations 3 times
+*  **Prevents duplicate notifications** - Checks if users are already in lists before adding during backfill
+*  **Handles large lists** - Supports lists with more than 100 members via pagination
 *  Retries the socket on failures
 *  Validates payloads as label messages
 *  Adds or removes users from lists in order of labeling.
-    * Does not resolve net changes before applying, so adding a label then removing the label will result in two actions when it could be none.
 *  Saves cursor state to filesystem every 1 second to reconnect at the last known value across deploys or disconnects.
-*  Has a basic HttpApi:
+*  **Comprehensive metrics and auditing**:
     * GET /health
-    * GET /cursor
+    * GET /cursor  
+    * GET /metrics - Track success rates, failures, and per-label statistics
 *  Writes logs to both `stdout` and `LOG_FILEPATH` (default: `log.txt`)
+*  **Runs on port 3500** by default
 
 ## Configuration
 
@@ -46,35 +51,47 @@ LOG_LEVEL=INFO
 
 ############################    List Config   #########################
 # A comma separated list of labels to subscribe to and generate lists for
-LABELS_TO_LIST=label-identifier-a,label-identifier-b,label-identifier-c
+# Format: "label" (defaults to curate list) or "label:type" where type is "curate" or "mod"
+# Examples: "spam:mod,quality-content:curate,news" (news defaults to curate)
+# The first label will appear at the top of the Bluesky Lists page.
+LABELS_TO_LIST=label-identifier-a:curate,label-identifier-b:mod,label-identifier-c
 ```
 
 ## Deploying
 
 ### Docker
 
-The package is available on Docker Hub at [kristojorgenson/bsky-label-watcher](https://hub.docker.com/repository/docker/kristojorgenson/bsky-label-watcher/general). You can run it with the following command:
+The package is available on GitHub Container Registry. You can run it with the following command:
 
 ```sh
 docker run \
- --pull \
+ --pull always \
  -v $(pwd)/data:/var/data \
  --env-file .env.local \
- -e CURSOR_FILEPATH=/var/data/cursor.txt \
+ -e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt \
  -e LOG_FILEPATH=/var/data/log.txt \
- kristojorgenson/bsky-label-watcher
+ -p 3500:3500 \
+ ghcr.io/femavibes/bsky-label-watcher:latest
 ```
-* `--pull` will ensure that the latest image is pulled from Docker Hub.
-* `-e CURSOR_FILEPATH=/var/data/cursor.txt` and `LOG_FILEPATH` env can be set in the command line as above, or in the `.env.local` file, but they need to be a subdirectory of `/var/data` as this is the directory with write permissions.
+
+* `--pull always` will ensure that the latest image is pulled from GitHub Container Registry.
+* `-e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt` and `LOG_FILEPATH` env can be set in the command line as above, or in the `.env.local` file, but they need to be a subdirectory of `/var/data` as this is the directory with write permissions.
 * `-v $(pwd)/data:/var/data` will bind the `/var/data` directory in the container to the `data` directory in the current working directory on the host machine.
+* `-p 3500:3500` exposes the HTTP API on port 3500.
 * `--env-file .env.local` will load the environment variables from the `.env.local` file in the current working directory.
+
+#### Accessing the API
+Once running, you can access:
+- Health check: `http://localhost:3500/health`
+- Current cursor: `http://localhost:3500/cursor`  
+- Metrics & auditing: `http://localhost:3500/metrics`
 
 
 ### Render
 
 The easiest way to deploy this service is to use the "Deploy to Render" button below. Using this button will create a new service on Render which you can configure. It will not have auto-deploy enabled, so you will need to manually redeploy the service if you want to pull in new updates from this git repo.
 
-<a href="https://render.com/deploy?repo=https://github.com/kristojorg/bsky-label-watcher">
+<a href="https://render.com/deploy?repo=https://github.com/femavibes/bsky-label-watcher">
 <img src="https://render.com/images/deploy-to-render-button.svg" alt="Deploy to Render" />
 </a>
 
@@ -87,6 +104,46 @@ You may also clone the repo and deploy it another way, or submit a PR to add a d
 When you apply a label to an account, it will automatically add that account to the list for that label (if you have enabled it). If you create a _new label_ in your labeler, and you want to create a list for it, you will need to update the `LABELS_TO_LIST` environment variable and redeploy the service.
 
 Ensure that you update the `LABELS_TO_LIST` environment variable with the new label id and redeploy **before applying any labels with it**. If you don't, the service will "miss" any labels that were applied before you updated. If this happens, you can fix it by rewinding the cursor in the `LABELER_CURSOR_FILEPATH` file and redeploying.
+
+## Metrics & Auditing
+
+The service provides comprehensive metrics at `http://localhost:3500/metrics` to track:
+
+- **Global stats**: Total users added/removed, failures, retries
+- **Per-label breakdown**: Success/failure rates for each specific label
+- **Audit trail**: Exactly how many users with each label were successfully added to lists
+
+Example metrics output:
+```json
+{
+  "usersAdded": 150,
+  "usersRemoved": 23, 
+  "addFailures": 2,
+  "removeFailures": 1,
+  "addRetries": 5,
+  "removeRetries": 2,
+  "labelStats": {
+    "spam": {
+      "added": 45,
+      "removed": 12,
+      "addFailures": 1,
+      "removeFailures": 0
+    }
+  }
+}
+```
+
+## List Types
+
+You can now create both regular curation lists and moderation lists:
+
+- **Curate lists** (`label:curate` or just `label`): Regular lists that users can subscribe to
+- **Moderation lists** (`label:mod`): Moderation lists for blocking/filtering
+
+Example configuration:
+```bash
+LABELS_TO_LIST=spam:mod,harassment:mod,quality-content:curate,news
+```
 
 ## Rate limits
 
