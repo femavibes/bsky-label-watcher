@@ -59,26 +59,47 @@ LABELS_TO_LIST=label-identifier-a:curate,label-identifier-b:mod,label-identifier
 
 ## Deploying
 
-### Docker
+### Docker (Recommended)
 
-The package is available on GitHub Container Registry. You can run it with the following command:
+**Quick Start - 3 commands:**
 
-```sh
-docker run \
- --pull always \
- -v $(pwd)/data:/var/data \
- --env-file .env.local \
- -e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt \
- -e LOG_FILEPATH=/var/data/log.txt \
- -p 3500:3500 \
- ghcr.io/femavibes/bsky-label-watcher:latest
+```bash
+# Download the config files
+wget https://raw.githubusercontent.com/femavibes/bsky-label-watcher/main/docker-compose.yml
+wget https://raw.githubusercontent.com/femavibes/bsky-label-watcher/main/.env
+
+# Edit .env with your credentials
+nano .env
+
+# Run the service
+docker compose up -d
 ```
 
-* `--pull always` will ensure that the latest image is pulled from GitHub Container Registry.
-* `-e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt` and `LOG_FILEPATH` env can be set in the command line as above, or in the `.env.local` file, but they need to be a subdirectory of `/var/data` as this is the directory with write permissions.
-* `-v $(pwd)/data:/var/data` will bind the `/var/data` directory in the container to the `data` directory in the current working directory on the host machine.
-* `-p 3500:3500` exposes the HTTP API on port 3500.
-* `--env-file .env.local` will load the environment variables from the `.env.local` file in the current working directory.
+**That's it!** The service will:
+- Pull the latest image automatically
+- Create a `data/` directory for persistent storage
+- Run on port 3500 with auto-restart
+
+#### Manual Docker Run
+
+If you prefer not to use docker-compose:
+
+```bash
+wget https://raw.githubusercontent.com/femavibes/bsky-label-watcher/main/.env
+nano .env  # Edit with your credentials
+mkdir data
+
+docker run -d \
+  --name label-watcher \
+  --pull always \
+  -v $(pwd)/data:/var/data \
+  --env-file .env \
+  -e LABELER_CURSOR_FILEPATH=/var/data/cursor.txt \
+  -e LOG_FILEPATH=/var/data/log.txt \
+  -p 3500:3500 \
+  --restart unless-stopped \
+  ghcr.io/femavibes/bsky-label-watcher:latest
+```
 
 #### Accessing the API
 Once running, you can access:
