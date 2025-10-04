@@ -1,6 +1,7 @@
 import { Cursor } from "@/Cursor"
 import { Metrics } from "@/Metrics"
 import { ConfigService } from "@/ConfigService"
+import { AtpListAccountAgent } from "@/AtpAgent"
 import { FileSystem } from "@effect/platform"
 import {
   HttpApi,
@@ -120,8 +121,9 @@ const AdminLive = HttpApiBuilder.group(ServerApi, "Admin", (handlers) => {
     .handle("backfillLabel", ({ request, path }) =>
       Effect.gen(function* () {
         yield* checkApiKey(request)
-        yield* ConfigService.backfillLabel(path)
-        return `Backfill started for label: ${path}`
+        const agent = yield* AtpListAccountAgent
+        yield* agent.backfillLabel(path)
+        return `Backfill completed for label: ${path}`
       })
     )
 })
@@ -129,6 +131,7 @@ const AdminLive = HttpApiBuilder.group(ServerApi, "Admin", (handlers) => {
 // Provide the implementation for the API
 const ServerApiLive = HttpApiBuilder.api(ServerApi).pipe(
   Layer.provide(Layer.merge(HealthLive, AdminLive)),
+  Layer.provide(AtpListAccountAgent.Default),
 )
 
 // Set up the server using BunHttpServer on port 3500
@@ -136,5 +139,5 @@ export const ApiLive = HttpApiBuilder.serve().pipe(
   Layer.provide(ServerApiLive),
   HttpServer.withLogAddress,
   Layer.provide(BunHttpServer.layer({ port: 3500 })),
-  Layer.provide(Layer.mergeAll(Cursor.Default, Metrics.Default, ConfigService.Default, BunFileSystem.layer)),
+  Layer.provide(Layer.mergeAll(Cursor.Default, Metrics.Default, ConfigService.Default, AtpListAccountAgent.Default, BunFileSystem.layer)),
 )
