@@ -99,7 +99,7 @@ const adminHTML = `<!DOCTYPE html>
 
 export const startSimpleServer = () => {
   serve({
-    port: 3501,
+    port: 3500,
     fetch(req) {
       const url = new URL(req.url)
       
