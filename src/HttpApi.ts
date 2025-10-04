@@ -37,6 +37,7 @@ const ServerApi = HttpApi.make("ServerApi").add(
     .add(HttpApiEndpoint.del("removeLabel")`/admin/labels/${Schema.String}`.addSuccess(Schema.String))
     .add(HttpApiEndpoint.put("updateLabel")`/admin/labels/${Schema.String}`.addSuccess(Schema.String))
     .add(HttpApiEndpoint.post("toggleLabel")`/admin/labels/${Schema.String}/toggle`.addSuccess(Schema.String))
+    .add(HttpApiEndpoint.post("backfillLabel")`/admin/labels/${Schema.String}/backfill`.addSuccess(Schema.String))
 ).addError(
   HttpApiError.NotFound,
   {
@@ -114,6 +115,13 @@ const AdminLive = HttpApiBuilder.group(ServerApi, "Admin", (handlers) => {
         yield* checkApiKey(request)
         yield* ConfigService.toggleLabel(path)
         return "Label toggled successfully"
+      })
+    )
+    .handle("backfillLabel", ({ request, path }) =>
+      Effect.gen(function* () {
+        yield* checkApiKey(request)
+        yield* ConfigService.backfillLabel(path)
+        return `Backfill started for label: ${path}`
       })
     )
 })

@@ -74,6 +74,7 @@ export class AtpListAccountAgent extends Effect.Service<AtpListAccountAgent>()(
       return {
         addUserToList: addUserToList(agent, env, get, metrics),
         removeUserFromList: removeUserFromList(agent, env, get, metrics),
+        backfillLabel: backfillLabel(agent, env, get, metrics),
       };
     }),
   }
@@ -341,6 +342,80 @@ const logOrWarn = (message: string) => (e: unknown) =>
     yield* Effect.logWarning(message);
     yield* Effect.logDebug(e);
   });
+
+const backfillLabel =
+  (
+    agent: Agent,
+    env: Env,
+    getList: (label: Label) => Effect.Effect<AtUriSchemaType | undefined>,
+    metrics: Metrics
+  ) =>
+  (label: Label) =>
+    Effect.gen(function* () {
+      yield* Effect.log(`Starting backfill for label: ${label}`);
+      
+      const listUri = yield* getList(label);
+      if (!listUri) {
+        yield* Effect.log(`No list found for label: ${label}`);
+        return;
+      }
+
+      // Query the labeler for all users with this label
+      yield* Effect.log(`Querying labeler for all users with label: ${label}`);
+      
+      const historicalUsers = yield* Effect.tryPromise({
+        try: async () => {
+          const response = await fetch(`https://labeler.urbanism.plus/xrpc/com.atproto.label.queryLabels?uriPatterns=*&labelValues=${label}&limit=1000`);
+          const data = await response.json();
+          return data.labels?.map((l: any) => l.uri.startsWith('at://') ? new AtUri(l.uri).hostname : l.uri) || [];
+        },
+        catch: (cause) => new AtpError({ message: `Failed to query historical labels for ${label}`, cause })
+      });
+      
+      let addedCount = 0;
+      let skippedCount = 0;
+      
+      for (const userDid of historicalUsers) {
+        // Check if user is already in the list
+        const existingMembership = yield* findUserInList(agent, listUri, userDid);
+        if (existingMembership) {
+          skippedCount++;
+          continue;
+        }
+        
+        // Add user to list
+        const listAccountDid = agent.did;
+        if (!listAccountDid) {
+          return yield* new AtpError({
+            message: "List account did is not set",
+          });
+        }
+
+        yield* Effect.tryPromise({
+          try: () =>
+            agent.app.bsky.graph.listitem.create(
+              { repo: listAccountDid },
+              {
+                subject: userDid,
+                list: listUri,
+                createdAt: new Date().toISOString(),
+              }
+            ),
+          catch: (cause) =>
+            new AtpError({ message: "Failed to add user to list during backfill", cause }),
+        }).pipe(
+          Effect.tap(() => {
+            addedCount++;
+            return Effect.log(`Backfill: Added ${userDid} to ${label}`);
+          }),
+          Effect.catchAll((error) => 
+            Effect.logError(`Backfill: Failed to add ${userDid} to ${label}:`, error)
+          )
+        );
+      }
+      
+      yield* Effect.log(`Backfill complete for ${label}: ${addedCount} added, ${skippedCount} skipped`);
+    });
 
 export class LabelNotFound extends Data.TaggedError("LabelNotFound")<{
   message?: string;
