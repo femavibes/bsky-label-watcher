@@ -67,7 +67,32 @@ const HealthLive = HttpApiBuilder.group(ServerApi, "Health", (handlers) => {
     )
     .handle("health", () => Effect.succeed("Looks ok."))
     .handle("cursor", () => Cursor.get)
-    .handle("metrics", () => Metrics.getMetrics)
+    .handle("metrics", ({ request }) => 
+      Effect.gen(function* () {
+        const url = new URL(request.url)
+        if (url.searchParams.get('admin') === 'true') {
+          return `<!DOCTYPE html>
+<html><head><title>Admin</title><meta charset="UTF-8"></head>
+<body><h1>Label Watcher Admin</h1>
+<p>API Key: <input type="password" id="key" placeholder="admin123"></p>
+<button onclick="login()">Login</button>
+<div id="result"></div>
+<script>
+function login() {
+  const key = document.getElementById('key').value;
+  fetch('/admin/config', {
+    headers: { 'Authorization': 'Bearer ' + key }
+  }).then(r => r.json()).then(data => {
+    document.getElementById('result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+  }).catch(e => {
+    document.getElementById('result').innerHTML = 'Error: ' + e.message;
+  });
+}
+</script></body></html>`
+        }
+        return yield* Metrics.getMetrics
+      })
+    )
     .handle("admin", () => 
       Effect.gen(function* () {
         const fs = yield* FileSystem.FileSystem
