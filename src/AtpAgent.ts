@@ -367,7 +367,13 @@ const backfillLabel =
         try: async () => {
           const response = await fetch(`https://labeler.urbanism.plus/xrpc/com.atproto.label.queryLabels?uriPatterns=*&labelValues=${label}&limit=1000`);
           const data = await response.json();
-          return data.labels?.map((l: any) => l.uri.startsWith('at://') ? new AtUri(l.uri).hostname : l.uri) || [];
+          return data.labels?.map((l: any) => {
+            if (l.uri.startsWith('at://')) {
+              const uri = new AtUri(l.uri);
+              return uri.hostname;
+            }
+            return l.uri;
+          }) || [];
         },
         catch: (cause) => new AtpError({ message: `Failed to query historical labels for ${label}`, cause })
       });
