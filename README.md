@@ -107,6 +107,25 @@ Once running, you can access:
 - Current cursor: `http://localhost:3501/cursor`  
 - Metrics & auditing: `http://localhost:3501/metrics`
 
+#### Backfilling Historical Data
+
+To populate lists with users who were labeled before the service started:
+
+```bash
+# Backfill a specific label
+docker compose exec label-watcher node backfill.js carbrain
+
+# Backfill multiple labels
+docker compose exec label-watcher node backfill.js nimby
+docker compose exec label-watcher node backfill.js spam
+```
+
+The backfill script will:
+- Query your labeler for all historical users with the specified label
+- Find the matching list in your Bluesky account
+- Add users to the list (skipping duplicates)
+- Show progress as it runs
+
 
 ### Render
 
