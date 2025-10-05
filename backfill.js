@@ -25,19 +25,63 @@ async function backfill(label) {
 
   console.log(`Backfilling label: ${label}`);
   
-  // Get historical labels from your labeler
-  const response = await fetch(`https://labeler.urbanism.plus/xrpc/com.atproto.label.queryLabels?uriPatterns=*&labelValues=${label}&limit=1000`);
-  const data = await response.json();
+  // Get historical labels from websocket starting from cursor=0
+  const WebSocket = require('ws');
+  const { decodeFirst } = require('@atcute/cbor');
   
-  const users = data.labels?.map(l => {
-    if (l.uri.startsWith('at://')) {
-      const uri = new URL(l.uri.replace('at://', 'https://'));
-      return uri.hostname;
-    }
-    return l.uri;
-  }) || [];
+  const wsUrl = `${process.env.LABELER_SOCKET_URL.replace('wss://', 'wss://').replace('http://', 'ws://')}?cursor=0`;
+  console.log(`Connecting to: ${wsUrl}`);
+  
+  const users = new Set();
+  
+  await new Promise((resolve, reject) => {
+    const ws = new WebSocket(wsUrl);
+    let messageCount = 0;
+    
+    ws.on('message', (data) => {
+      try {
+        const [header, remainder] = decodeFirst(new Uint8Array(data));
+        const [body] = decodeFirst(remainder);
+        
+        if (body.labels) {
+          for (const l of body.labels) {
+            if (l.val === label && !l.neg) {
+              let userDid;
+              if (l.uri.startsWith('at://')) {
+                const uri = new URL(l.uri.replace('at://', 'https://'));
+                userDid = uri.hostname;
+              } else {
+                userDid = l.uri;
+              }
+              users.add(userDid);
+            }
+          }
+        }
+        
+        messageCount++;
+        if (messageCount % 100 === 0) {
+          console.log(`Processed ${messageCount} messages, found ${users.size} users with ${label}`);
+        }
+      } catch (e) {
+        // Skip invalid messages
+      }
+    });
+    
+    ws.on('close', () => {
+      console.log(`Websocket closed. Found ${users.size} total users with ${label}`);
+      resolve();
+    });
+    
+    ws.on('error', reject);
+    
+    // Close after 30 seconds to avoid infinite processing
+    setTimeout(() => {
+      ws.close();
+    }, 30000);
+  });
 
-  console.log(`Found ${users.length} users with label ${label}`);
+  const userArray = Array.from(users);
+  console.log(`Found ${userArray.length} users with label ${label}`);
   
   // Get labeler service definition to find exact list name
   const labelerDid = process.env.LABELER_DID;
@@ -68,7 +112,7 @@ async function backfill(label) {
   
   // Add users to list
   let added = 0;
-  for (const userDid of users) {
+  for (const userDid of userArray) {
     try {
       await agent.app.bsky.graph.listitem.create(
         { repo: agent.session.did },
