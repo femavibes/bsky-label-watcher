@@ -2,14 +2,26 @@
 
 const { AtpAgent } = require('@atproto/api');
 
+// Load .env file if it exists (takes priority over docker-compose env vars)
+try {
+  require('dotenv').config();
+} catch (e) {
+  // dotenv not available in production, use environment variables
+}
+
 async function backfill(label) {
   const agent = new AtpAgent({ service: 'https://bsky.social' });
   
-  // Login
-  await agent.login({
-    identifier: process.env.LIST_ACCOUNT_DID || process.env.LABELER_DID,
-    password: process.env.LIST_ACCOUNT_APP_PASSWORD || process.env.LABELER_APP_PASSWORD
-  });
+  // Login with fallback priority: .env file > docker-compose env > defaults
+  const identifier = process.env.LIST_ACCOUNT_DID || process.env.LABELER_DID;
+  const password = process.env.LIST_ACCOUNT_APP_PASSWORD || process.env.LABELER_APP_PASSWORD;
+  
+  if (!identifier || !password) {
+    console.error('Missing credentials. Set LABELER_DID and LABELER_APP_PASSWORD');
+    process.exit(1);
+  }
+  
+  await agent.login({ identifier, password });
 
   console.log(`Backfilling label: ${label}`);
   
@@ -27,12 +39,28 @@ async function backfill(label) {
 
   console.log(`Found ${users.length} users with label ${label}`);
   
+  // Get labeler service definition to find exact list name
+  const labelerDid = process.env.LABELER_DID;
+  const serviceDoc = await agent.app.bsky.labeler.getServices({
+    dids: [labelerDid],
+    detailed: true,
+  });
+  
+  const labelDef = serviceDoc.data.views[0]?.policies?.labelValueDefinitions?.find(d => d.identifier === label);
+  if (!labelDef) {
+    console.log(`Label "${label}" not found in labeler definition`);
+    return;
+  }
+  
+  const expectedListName = labelDef.locales[0].name;
+  console.log(`Looking for list named: ${expectedListName}`);
+  
   // Find the list for this label
   const lists = await agent.app.bsky.graph.getLists({ actor: agent.session.did });
-  const targetList = lists.data.lists.find(list => list.name.toLowerCase().includes(label.toLowerCase()));
+  const targetList = lists.data.lists.find(list => list.name === expectedListName);
   
   if (!targetList) {
-    console.log(`No list found for label: ${label}`);
+    console.log(`No list found with name: ${expectedListName}`);
     return;
   }
   
