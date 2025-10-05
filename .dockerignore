@@ -14,4 +14,4 @@ helm-charts
 coverage*
 cursor.txt
 log.txt
-.env.local
+.env.local.env
