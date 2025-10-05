@@ -110,9 +110,38 @@ async function backfill(label) {
   
   console.log(`Using list: ${targetList.name}`);
   
-  // Add users to list
+  // Check existing list members to avoid duplicates
+  console.log('Checking existing list members...');
+  const existingMembers = new Set();
+  let cursor;
+  
+  do {
+    const response = await agent.app.bsky.graph.getList({ 
+      list: targetList.uri, 
+      limit: 100,
+      cursor 
+    });
+    
+    for (const item of response.data.items) {
+      existingMembers.add(item.subject.did);
+    }
+    
+    cursor = response.data.cursor;
+  } while (cursor);
+  
+  console.log(`Found ${existingMembers.size} existing members`);
+  
+  // Add users to list (skip if already exists)
   let added = 0;
+  let skipped = 0;
+  
   for (const userDid of userArray) {
+    if (existingMembers.has(userDid)) {
+      console.log(`Skipping ${userDid} (already in list)`);
+      skipped++;
+      continue;
+    }
+    
     try {
       await agent.app.bsky.graph.listitem.create(
         { repo: agent.session.did },
@@ -125,15 +154,11 @@ async function backfill(label) {
       console.log(`Added ${userDid}`);
       added++;
     } catch (e) {
-      if (e.message?.includes('already exists')) {
-        console.log(`${userDid} already in list`);
-      } else {
-        console.error(`Failed to add ${userDid}:`, e.message);
-      }
+      console.error(`Failed to add ${userDid}:`, e.message);
     }
   }
   
-  console.log(`Backfill complete: ${added} users added`);
+  console.log(`Backfill complete: ${added} users added, ${skipped} users skipped (already in list)`);
 }
 
 const label = process.argv[2];
