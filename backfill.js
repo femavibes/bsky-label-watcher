@@ -9,7 +9,7 @@ try {
   // dotenv not available in production, use environment variables
 }
 
-async function backfill(label) {
+async function backfill(label, timeoutMinutes = 0.5) {
   const agent = new AtpAgent({ service: 'https://bsky.social' });
   
   // Login with fallback priority: .env file > docker-compose env > defaults
@@ -74,10 +74,12 @@ async function backfill(label) {
     
     ws.on('error', reject);
     
-    // Close after 30 seconds to avoid infinite processing
+    // Close after specified timeout to avoid infinite processing
+    const timeoutMs = timeoutMinutes * 60 * 1000;
+    console.log(`Will timeout after ${timeoutMinutes} minutes`);
     setTimeout(() => {
       ws.close();
-    }, 30000);
+    }, timeoutMs);
   });
 
   const userArray = Array.from(users);
@@ -162,9 +164,13 @@ async function backfill(label) {
 }
 
 const label = process.argv[2];
+const timeoutMinutes = parseFloat(process.argv[3]) || 0.5; // Default 0.5 minutes (30 seconds)
+
 if (!label) {
-  console.log('Usage: node backfill.js <label>');
+  console.log('Usage: node backfill.js <label> [timeout_minutes]');
+  console.log('Example: node backfill.js nimby 2    # 2 minutes timeout');
+  console.log('Example: node backfill.js carbrain   # 30 seconds default');
   process.exit(1);
 }
 
-backfill(label).catch(console.error);
+backfill(label, timeoutMinutes).catch(console.error);
