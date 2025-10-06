@@ -112,19 +112,28 @@ Once running, you can access:
 To populate lists with users who were labeled before the service started:
 
 ```bash
-# Backfill a specific label
+# Backfill all labels (30 seconds timeout each)
+docker compose exec label-watcher node backfill.js
+docker compose exec label-watcher node backfill.js all
+
+# Backfill all labels (2 minutes timeout each)
+docker compose exec label-watcher node backfill.js 2
+docker compose exec label-watcher node backfill.js all 2
+
+# Backfill specific label (30 seconds timeout)
 docker compose exec label-watcher node backfill.js carbrain
 
-# Backfill multiple labels
-docker compose exec label-watcher node backfill.js nimby
-docker compose exec label-watcher node backfill.js spam
+# Backfill specific label (2 minutes timeout)
+docker compose exec label-watcher node backfill.js nimby 2
 ```
 
 The backfill script will:
-- Query your labeler for all historical users with the specified label
-- Find the matching list in your Bluesky account
-- Add users to the list (skipping duplicates)
-- Show progress as it runs
+- Connect to your labeler's websocket with cursor=0 to replay all historical labels
+- Filter for users with the specified label(s) from your LABELS_TO_LIST
+- Check existing list members to avoid duplicates (no notifications for existing users)
+- Add only new users to the appropriate lists
+- Show progress as it processes historical data
+- Automatically close when no new messages arrive for 10 seconds
 
 
 ### Render
