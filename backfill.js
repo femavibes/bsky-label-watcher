@@ -177,14 +177,63 @@ async function backfill(label, timeoutMinutes = 0.5) {
   console.log(`Backfill complete: ${added} users added, ${skipped} users skipped (already in list)`);
 }
 
-const label = process.argv[2];
-const timeoutMinutes = parseFloat(process.argv[3]) || 0.5; // Default 0.5 minutes (30 seconds)
+const labelArg = process.argv[2];
+let timeoutMinutes = 0.5; // Default 0.5 minutes (30 seconds)
 
-if (!label) {
-  console.log('Usage: node backfill.js <label> [timeout_minutes]');
-  console.log('Example: node backfill.js nimby 2    # 2 minutes timeout');
-  console.log('Example: node backfill.js carbrain   # 30 seconds default');
-  process.exit(1);
+// Parse arguments - handle both "all" and timeout
+if (!labelArg) {
+  // No arguments = backfill all
+  backfillAll(timeoutMinutes).catch(console.error);
+} else if (labelArg === 'all') {
+  // "all" with optional timeout
+  timeoutMinutes = parseFloat(process.argv[3]) || 0.5;
+  backfillAll(timeoutMinutes).catch(console.error);
+} else if (!isNaN(parseFloat(labelArg))) {
+  // Just a number = backfill all with timeout
+  timeoutMinutes = parseFloat(labelArg);
+  backfillAll(timeoutMinutes).catch(console.error);
+} else {
+  // Specific label with optional timeout
+  const label = labelArg;
+  timeoutMinutes = parseFloat(process.argv[3]) || 0.5;
+  backfill(label, timeoutMinutes).catch(console.error);
 }
 
-backfill(label, timeoutMinutes).catch(console.error);
+function showUsage() {
+  console.log('Usage:');
+  console.log('  node backfill.js                    # Backfill all labels (30s timeout)');
+  console.log('  node backfill.js 2                  # Backfill all labels (2min timeout)');
+  console.log('  node backfill.js all                # Backfill all labels (30s timeout)');
+  console.log('  node backfill.js all 2              # Backfill all labels (2min timeout)');
+  console.log('  node backfill.js nimby              # Backfill specific label (30s timeout)');
+  console.log('  node backfill.js nimby 2            # Backfill specific label (2min timeout)');
+}
+
+async function backfillAll(timeoutMinutes) {
+  const labelsToList = process.env.LABELS_TO_LIST;
+  if (!labelsToList) {
+    console.error('LABELS_TO_LIST environment variable not found');
+    process.exit(1);
+  }
+  
+  // Parse labels from LABELS_TO_LIST (remove :curate/:mod suffixes)
+  const labels = labelsToList.split(',').map(item => {
+    const label = item.trim().split(':')[0];
+    return label;
+  });
+  
+  console.log(`Backfilling ${labels.length} labels: ${labels.join(', ')}`);
+  console.log(`Timeout: ${timeoutMinutes} minutes per label\n`);
+  
+  for (let i = 0; i < labels.length; i++) {
+    const label = labels[i];
+    console.log(`\n=== Backfilling ${i + 1}/${labels.length}: ${label} ===`);
+    try {
+      await backfill(label, timeoutMinutes);
+    } catch (error) {
+      console.error(`Failed to backfill ${label}:`, error.message);
+    }
+  }
+  
+  console.log('\n=== All backfills complete ===');
+}
