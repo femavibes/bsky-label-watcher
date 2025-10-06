@@ -37,8 +37,10 @@ async function backfill(label, timeoutMinutes = 0.5) {
   await new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     let messageCount = 0;
+    let lastMessageTime = Date.now();
     
     ws.on('message', (data) => {
+      lastMessageTime = Date.now();
       try {
         const [header, remainder] = decodeFirst(new Uint8Array(data));
         const [body] = decodeFirst(remainder);
@@ -77,9 +79,21 @@ async function backfill(label, timeoutMinutes = 0.5) {
     // Close after specified timeout to avoid infinite processing
     const timeoutMs = timeoutMinutes * 60 * 1000;
     console.log(`Will timeout after ${timeoutMinutes} minutes`);
-    setTimeout(() => {
+    
+    const maxTimeout = setTimeout(() => {
+      console.log('Reached maximum timeout, closing...');
       ws.close();
     }, timeoutMs);
+    
+    // Also close if no messages received for 10 seconds (end of history)
+    const checkInactivity = setInterval(() => {
+      if (Date.now() - lastMessageTime > 10000) {
+        console.log('No new messages for 10 seconds, assuming end of history...');
+        clearTimeout(maxTimeout);
+        clearInterval(checkInactivity);
+        ws.close();
+      }
+    }, 5000);
   });
 
   const userArray = Array.from(users);
