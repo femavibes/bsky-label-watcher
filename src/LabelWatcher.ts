@@ -69,25 +69,18 @@ const handleLabel = (agent: AtpListAccountAgent) => (label: MessageLabels) =>
   Effect.gen(function* () {
     const labels = label.body.labels;
     for (const l of labels) {
-      let subjectDid: string;
-      let listLabel: string;
-
-      // If the URI is an at:// URI, parse it to get the author's DID.
-      // Otherwise, assume it's already a DID string.
+      // Only process account labels (DIDs), skip post labels (AT-URIs)
       if (l.uri.startsWith("at://")) {
-        subjectDid = new AtUri(l.uri).hostname;
-        listLabel = `${l.val}-comments`;
-      } else {
-        subjectDid = l.uri;
-        listLabel = l.val;
+        continue;
       }
 
+      const subjectDid = l.uri;
+      const listLabel = l.val;
+
       if (l.neg) {
-        yield* agent.removeUserFromList(subjectDid, l.val);
         yield* agent.removeUserFromList(subjectDid, listLabel);
         continue;
       }
-      yield* agent.addUserToList(subjectDid, l.val);
       yield* agent.addUserToList(subjectDid, listLabel);
     }
     return label.body.seq;
